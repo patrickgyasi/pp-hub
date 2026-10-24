@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PP Hub | Product Catalogue</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+            background: #173b32;
+            color: white;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .product {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .product-img {
+            width: 120px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px auto;
+        }
+
+        .buy-link {
+            display: inline-block;
+            padding: 10px 14px;
+            background: #176b45;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>PP Hub</h1>
+        <p>Discover Better Products. Shop with Confidence.</p>
+    </header>
+
+    <main>
+        <h2>Our Product Catalogue</h2>
+
+        <div class="product-grid">
+
+            <article class="product">
+                <h2>USB-C Adapter</h2>
+
+                <a
+                    href="https://www.jumia.com.gh/generic-usb-to-usb-c-adapter-fast-charging-datatransfer-otg-adapter-300890977.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <img
+                        class="product-img"
+                        src="https://i.ibb.co/fdmhn4gv/PPHUB-USBC-ADP-001-main.png"
+
+                        alt="USB to USB-C adapter"
+                    >
+                </a>
+
+                <p>A handy accessory for compatible USB-C devices.</p>
+
+                <p>Price:GH¢34</p>
+                
+<article class="product">
+    <h2>USB-C Adapter</h2>
+
+    <a
+        href="https://www.jumia.com.gh/generic-usb-to-usb-c-adapter-fast-charging-datatransfer-otg-adapter-300890977.html"
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+        <img
+            class="product-img"
+            src="YOUR-USB-ADAPTER-IMAGE-URL"
+            alt="USB to USB-C adapter"
+        >
+    </a>
+
+    <p>A compact adapter for compatible devices.</p>
+
+    <h3>Key Features</h3>
+    <ul>
+        <li>USB to USB-C connection</li>
+        <li>Supports data transfer if compatible</li>
+        <li>Charging support depends on the adapter and connected devices</li>
+        <li>Compact and portable design</li>
+    </ul>
+
+    <h3>How to Use</h3>
+    <ol>
+        <li>Check that the adapter matches your device's port.</li>
+        <li>Connect the adapter to the compatible port.</li>
+        <li>Connect the other device or cable.</li>
+        <li>Check that the connection works as expected.</li>
+    </ol>
+
+
+
+    <a
+        class="buy-link"
+        href="https://www.jumia.com.gh/generic-usb-to-usb-c-adapter-fast-charging-datatransfer-otg-adapter-300890977.html"
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+        View on Jumia
+    </a>
+</article>
+
+            <article class="product">
+                <h2>Rabbit Phone Stand</h2>
+
+                <a
+                    href="https://www.jumia.com.gh/generic-rabbit-phone-stand-portable-desktop-phone-holder-300890803.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <img
+                        class="product-img"
+                        src="https://i.ibb.co/Nv08Z8n/PPHUB-RPS-001-main.png"
+                        alt="Rabbit-shaped phone stand"
+                    >
+                </a>
+
+                <p>A portable stand for your phone.</p>
+
+                <p>Price:45</p>
+                
+<h3>Key Features</h3>
+<ul>
+    <li>Rabbit-shaped design</li>
+    <li>Portable desktop phone holder</li>
+    <li>Helps position a phone for hands-free viewing</li>
+</ul>
+
+<h3>How to Use</h3>
+<ol>
+    <li>Place the stand on a stable, flat surface.</li>
+    <li>Position your phone on the holder.</li>
+    <li>Adjust the phone for comfortable viewing, if supported.</li>
+    <li>Check that the phone is stable before letting go.</li>
+</ol>
+
+
+                <a
+                    class="buy-link"
+                    href="https://www.jumia.com.gh/generic-rabbit-phone-stand-portable-desktop-phone-holder-300890803.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    View on Jumia
+                </a>
+            </article>
+
+        </div>
+    </main>
+
+    <footer>
+        <p>PP Hub | Product discovery and buying guides</p>
+    </footer>
+</body>
+</html>
