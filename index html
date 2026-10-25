@@ -75,7 +75,9 @@
   id="product-search"
   placeholder="Search products..."
 >
-
+<p id="no-results" style="display: none;">
+  No products found. Try another search.
+</p>
         <div class="product-grid">
 
             <article class="product">
