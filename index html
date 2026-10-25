@@ -134,7 +134,7 @@ margin-button:10px;
 
     <main>
         <h2>Our Product Catalogue</h2>
-<<div class="search-container">
+<div class="search-container">
   <span class="search-icon">🔍</span>
   <input
     type="text"
