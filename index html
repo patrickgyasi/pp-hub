@@ -191,14 +191,16 @@ margin-button:10px;
     background: #17483e;
     color: white;
     text-align: center;
-    padding: 25px 15px;
+    padding: 30px 20px;
     border-radius: 12px;
     margin-bottom: 25px;
+border: 1px solid #2b6658;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .site-header h1 {
     margin: 0;
-    font-size: 32px;
+    font-size: clamp(24px, 5vw, 32px);
     letter-spacing: 1px;
 }
 
@@ -206,6 +208,30 @@ margin-button:10px;
     margin: 8px 0 0;
     font-size: 16px;
     line-height: 1.5;
+}
+.site-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    background: #eaf2ee;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+margin-top: 15px;
+}
+
+.site-nav a {
+    color: #17483e;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.site-nav a:hover {
+    background: #17483e;
+    color: white;
 }
     </style>
 </head>
@@ -215,7 +241,11 @@ margin-button:10px;
     <h1>PP Hub</h1>
     <p>Discover useful products at great prices.</p>
 </header>
-
+<nav class="site-nav">
+    <a href="#products">All Products</a>
+    <a href="#phone-accessories">Phone Accessories</a>
+    <a href="#home-living">Home &amp; Living</a>
+</nav>
     <main>
         <h2>Our Product Catalogue</h2>
 <div class="search-container">
