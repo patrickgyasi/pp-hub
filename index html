@@ -199,6 +199,11 @@ let matchCount = 0;
         product.style.display = "none";
       }
     });
+  if (matchCount === 0) {
+    noResults.style.display = "block";
+  } else {
+    noResults.style.display = "none";
+  }
   });
 </script>
 </body>
