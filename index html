@@ -75,6 +75,7 @@
   id="product-search"
   placeholder="Search products..."
 >
+<button id="clear-search" type="button">Clear Search</button>
 <p id="no-results" style="display: none;">
   We are sorry!. No result match your search 🔍 
 </p>
