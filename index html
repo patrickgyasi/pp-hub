@@ -185,28 +185,21 @@
     </footer>
 <script>
   const searchBox = document.getElementById("product-search");
-  const searchText = searchBox.value;
   const products = document.querySelectorAll(".product");
-const noResults = document.getElementById("no-results");
-  
-  });searchBox.addEventListener("input", function() {
+
+  searchBox.addEventListener("input", function() {
     const searchText = searchBox.value.toLowerCase();
 
     products.forEach(function(product) {
-        const productText = product.textContent.toLowerCase();
-  if (matchCount === 0) {
-    noResults.style.display = "block";
-  } else {
-    noResults.style.display = "none";
-  }
-        if (productText.includes(searchText)) {
-            product.style.display = "";
-matchCount++;
-        } else {
-            product.style.display = "none";
-        }
+      const productText = product.textContent.toLowerCase();
+
+      if (productText.includes(searchText)) {
+        product.style.display = "";
+      } else {
+        product.style.display = "none";
+      }
     });
-});
+  });
 </script>
 </body>
 </html>
