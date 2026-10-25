@@ -39,6 +39,8 @@ to
     box-sizing: border-box;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
     transition: box-shadow 0.2s ease, transform 0.2s ease;
+display: flex;
+flex-direction: column;
 }
 
         
