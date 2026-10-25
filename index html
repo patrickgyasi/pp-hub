@@ -201,14 +201,15 @@ let matchCount = 0;
       }
     });
   if (matchCount === 0) {
-    noResults.style.display = "block";
+    noResults.style.display = "none";
   } else {
     noResults.style.display = "none";
   }
-if (matchCount === 1) {
-  resultCount.textContent = "1 product found";
+if (matchCount === 0) {
+  resultCount.textContent = "No products found";
 } else {
-  resultCount.textContent = matchCount + " products found";
+  resultCount.textContent = "Showing " + matchCount +
+    (matchCount === 1 ? " product" : " products");
 }
   });
 </script>
