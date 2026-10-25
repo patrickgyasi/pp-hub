@@ -92,6 +92,9 @@ margin-top: auto;
 }
 
         @media (max-width: 600px) {
+.product {
+    padding: 12px;
+}
             .product-grid {
             
             }
