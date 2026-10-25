@@ -85,6 +85,7 @@ to
         <h2>Our Product Catalogue</h2>
 <input
   type="text"
+class="search-input"
   id="product-search"
   placeholder="Search products..."
 >
