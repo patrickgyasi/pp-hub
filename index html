@@ -196,7 +196,7 @@ margin-button:10px;
 
                 <p>A handy accessory for compatible USB-C devices.</p>
 
-                <p>Price:GH¢34</p>
+                <p class="product-price">Price: GH₵34</p>
                 
 <h3>Key  Features 
 </h3>
@@ -244,7 +244,7 @@ margin-button:10px;
 
                 <p>A portable stand for your phone.</p>
 
-                <p>Price:45</p>
+                <p class="product-price">Price: GH₵45</p>
                 
 <h3>Key Features</h3>
 <ul>
