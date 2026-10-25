@@ -78,6 +78,7 @@
 <p id="no-results" style="display: none;">
   No products found. Try another search.
 </p>
+<p id="result-count">2 products found</p>
         <div class="product-grid">
 
             <article class="product">
