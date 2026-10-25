@@ -102,7 +102,7 @@ to
   type="text"
 class="search-input"
   id="product-search"
-  placeholder="Search products..."
+  placeholder="Search by product name or feature..."
 >
 <button id="clear-search"class ="clear-button"type="button" style="display: none;">
   Clear Search
