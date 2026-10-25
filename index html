@@ -59,6 +59,19 @@ to
                 grid-template-columns: 1fr;
             }
         }
+.clear-button {
+  background-color: #17483e;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.clear-button:hover {
+  background-color: #0f332c;
+}
     </style>
 </head>
 
@@ -75,7 +88,7 @@ to
   id="product-search"
   placeholder="Search products..."
 >
-<button id="clear-search" type="button" style="display: none;">
+<button id="clear-search"class ="clear-button"type="button" style="display: none;">
   Clear Search
 </button>
 <p id="no-results" style="display: none;">
