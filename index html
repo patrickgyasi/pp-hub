@@ -70,6 +70,11 @@
 
     <main>
         <h2>Our Product Catalogue</h2>
+<input
+  type="text"
+  id="product-search"
+  placeholder="Search products..."
+>
 
         <div class="product-grid">
 
@@ -175,5 +180,13 @@
     <footer>
         <p>PP Hub | Product discovery and buying guides</p>
     </footer>
+<script>
+  const searchBox = document.getElementById("product-search");
+  const searchText = searchBox.value;
+
+  searchBox.addEventListener("input", function() {
+    console.log(searchBox.value);
+  });
+</script>
 </body>
 </html>
