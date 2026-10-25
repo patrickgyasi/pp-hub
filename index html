@@ -92,7 +92,7 @@ margin-top: auto;
 
         @media (max-width: 600px) {
             .product-grid {
-                grid-template-columns: 1fr;
+            
             }
         }
 .clear-button {
