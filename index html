@@ -54,7 +54,7 @@ flex-direction: column;
     object-fit: contain;
     display: block;
     margin: 10px auto;
-
+}
         }
 .product h2 {
     margin-top: 5px;
