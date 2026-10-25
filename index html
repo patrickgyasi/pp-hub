@@ -212,6 +212,7 @@ if (matchCount === 0) {
   resultCount.textContent = "Showing " + matchCount +
     (matchCount === 1 ? " product" : " products");
 }
+const clearButton = document.getElementById("clear-search");
   });
 </script>
 </body>
