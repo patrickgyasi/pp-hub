@@ -186,7 +186,7 @@
   const searchBox = document.getElementById("product-search");
   const searchText = searchBox.value;
   const products = document.querySelectorAll(".product");
-
+const noResults = document.getElementById("no-results");
   
   });searchBox.addEventListener("input", function() {
     const searchText = searchBox.value.toLowerCase();
