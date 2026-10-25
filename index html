@@ -193,6 +193,8 @@ const noResults = document.getElementById("no-results");
 const resultCount = document.getElementById("result-count");
 const clearButton = document.getElementById("clear-search");
   searchBox.addEventListener("input", function() {
+clearButton.style.display =
+  searchBox.value.length > 0 ? "inline-block" : "none";
     const searchText = searchBox.value.toLowerCase();
 let matchCount = 0;
     products.forEach(function(product) {
