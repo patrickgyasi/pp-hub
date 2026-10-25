@@ -55,6 +55,10 @@ to
 .product h2 {
     margin-top: 5px;
     margin-bottom: 12px;
+    color: #173b32;
+    font-size: 22px;
+    line-height: 1.3;
+}
 }
 
 .product p {
