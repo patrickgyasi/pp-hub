@@ -205,7 +205,11 @@ let matchCount = 0;
   } else {
     noResults.style.display = "none";
   }
-resultCount.textContent = matchCount + " products found";
+if (matchCount === 1) {
+  resultCount.textContent = "1 product found";
+} else {
+  resultCount.textContent = matchCount + " products found";
+}
   });
 </script>
 </body>
