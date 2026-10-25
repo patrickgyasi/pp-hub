@@ -187,14 +187,34 @@ margin-button:10px;
     margin-bottom: 6px;
     line-height: 1.5;
 }
+.site-header {
+    background: #17483e;
+    color: white;
+    text-align: center;
+    padding: 25px 15px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.site-header h1 {
+    margin: 0;
+    font-size: 32px;
+    letter-spacing: 1px;
+}
+
+.site-header p {
+    margin: 8px 0 0;
+    font-size: 16px;
+    line-height: 1.5;
+}
     </style>
 </head>
 
 <body>
-    <header>
-        <h1>PP Hub</h1>
-        <p>Discover Better Products. Shop with Confidence.</p>
-    </header>
+<header class="site-header">
+    <h1>PP Hub</h1>
+    <p>Discover useful products at great prices.</p>
+</header>
 
     <main>
         <h2>Our Product Catalogue</h2>
