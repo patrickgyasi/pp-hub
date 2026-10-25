@@ -1,4 +1,4 @@
-
+to
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -215,7 +215,7 @@ if (matchCount === 0) {
   resultCount.textContent = "Showing " + matchCount +
     (matchCount === 1 ? " product" : " products");
 }
-const clearButton = document.getElementById("clear-search");
+
 clearButton.addEventListener("click", function() {
   searchBox.value = "";
   searchBox.dispatchEvent(new Event("input"));
