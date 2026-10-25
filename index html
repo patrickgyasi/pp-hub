@@ -185,9 +185,20 @@
   const searchText = searchBox.value;
   const products = document.querySelectorAll(".product");
 
-  searchBox.addEventListener("input", function() {
-    console.log(searchBox.value);
-  });
+  
+  });searchBox.addEventListener("input", function() {
+    const searchText = searchBox.value.toLowerCase();
+
+    products.forEach(function(product) {
+        const productText = product.textContent.toLowerCase();
+
+        if (productText.includes(searchText)) {
+            product.style.display = "";
+        } else {
+            product.style.display = "none";
+        }
+    });
+});
 </script>
 </body>
 </html>
