@@ -193,9 +193,14 @@ const noResults = document.getElementById("no-results");
 
     products.forEach(function(product) {
         const productText = product.textContent.toLowerCase();
-
+  if (matchCount === 0) {
+    noResults.style.display = "block";
+  } else {
+    noResults.style.display = "none";
+  }
         if (productText.includes(searchText)) {
             product.style.display = "";
+matchCount++;
         } else {
             product.style.display = "none";
         }
