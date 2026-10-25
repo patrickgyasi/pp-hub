@@ -72,6 +72,21 @@ to
 .clear-button:hover {
   background-color: #0f332c;
 }
+.search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px;
+  border: 2px solid #17483e;
+  border-radius: 8px;
+  font-size: 16px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #0f332c;
+  box-shadow: 0 0 4px rgba(23, 72, 62, 0.4);
+}
     </style>
 </head>
 
