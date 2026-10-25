@@ -90,8 +90,9 @@ to
 .search-container {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   max-width: 440px;
+margin-button:10px;
 }
 
 .search-icon {
