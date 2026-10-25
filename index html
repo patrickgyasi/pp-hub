@@ -191,6 +191,7 @@
   const products = document.querySelectorAll(".product");
 const noResults = document.getElementById("no-results");
 const resultCount = document.getElementById("result-count");
+const clearButton = document.getElementById("clear-search");
   searchBox.addEventListener("input", function() {
     const searchText = searchBox.value.toLowerCase();
 let matchCount = 0;
