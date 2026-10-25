@@ -93,6 +93,10 @@ text-align: center;
 .buy-link:hover {
     background: #0f4d32;
 }
+.buy-link:focus-visible {
+    outline: 3px solid #f0b429;
+    outline-offset: 3px;
+}
 
         @media (max-width: 600px) {
 .product {
