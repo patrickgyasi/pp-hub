@@ -67,13 +67,19 @@ to
 }
 
         .buy-link {
-            display: inline-block;
-            padding: 10px 14px;
-            background: #176b45;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
+    display: inline-block;
+    padding: 12px 18px;
+    background: #176b45;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.buy-link:hover {
+    background: #0f4d32;
+}
 
         @media (max-width: 600px) {
             .product-grid {
