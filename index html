@@ -76,7 +76,7 @@
   placeholder="Search products..."
 >
 <p id="no-results" style="display: none;">
-  No products found. Try another search.
+  We are sorry!. No result match your search 🔍 
 </p>
 <p id="result-count">2 products found</p>
         <div class="product-grid">
@@ -195,7 +195,7 @@ let matchCount = 0;
 
       if (productText.includes(searchText)) {
         product.style.display = "";
-      } else {
+ matchCount++     } else {
         product.style.display = "none";
       }
     });
