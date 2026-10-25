@@ -269,7 +269,8 @@ margin-top: 15px;
   We are sorry!. No result match your search 🔍 
 </p>
 <p id="result-count">2 products found</p>
-        <div class="product-grid">
+        <div class="product-grid"
+id="product">
 
             <article class="product">
                 <h2>USB-C Adapter</h2>
