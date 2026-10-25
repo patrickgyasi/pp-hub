@@ -154,6 +154,10 @@ margin-button:10px;
     color: #176b45;
     margin: 12px 0;
 }
+.product-price {
+    border-bottom: 1px solid #e0e5e2;
+    padding-bottom: 12px;
+}
 .product ul,
 .product ol {
     padding-left: 22px;
