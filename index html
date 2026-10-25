@@ -154,6 +154,15 @@ margin-button:10px;
     color: #176b45;
     margin: 12px 0;
 }
+.product ul,
+.product ol {
+    padding-left: 22px;
+}
+
+.product li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
     </style>
 </head>
 
