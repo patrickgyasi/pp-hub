@@ -213,6 +213,10 @@ if (matchCount === 0) {
     (matchCount === 1 ? " product" : " products");
 }
 const clearButton = document.getElementById("clear-search");
+clearButton.addEventListener("click", function() {
+  searchBox.value = "";
+  searchBox.dispatchEvent(new Event("input"));
+});
   });
 </script>
 </body>
