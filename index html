@@ -186,10 +186,10 @@
 <script>
   const searchBox = document.getElementById("product-search");
   const products = document.querySelectorAll(".product");
-
+const noResults = document.getElementById("no-results");
   searchBox.addEventListener("input", function() {
     const searchText = searchBox.value.toLowerCase();
-
+let matchCount = 0;
     products.forEach(function(product) {
       const productText = product.textContent.toLowerCase();
 
