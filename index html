@@ -81,6 +81,7 @@ flex-direction: column;
     font-weight: bold;
     border-radius: 6px;
     transition: background-color 0.2s ease;
+margin-top: auto;
 }
 
 .buy-link:hover {
