@@ -98,11 +98,15 @@ to
 
     <main>
         <h2>Our Product Catalogue</h2>
-<input
-  type="text"
-class="search-input"
-  id="product-search"
-  placeholder="Search by product name or feature..."
+<<div class="search-container">
+  <span class="search-icon">🔍</span>
+  <input
+    type="text"
+    id="product-search"
+    class="search-input"
+    placeholder="Search by product name or feature..."
+  >
+</div>
 >
 <button id="clear-search"class ="clear-button"type="button" style="display: none;">
   Clear Search
