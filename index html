@@ -87,6 +87,21 @@ to
   border-color: #0f332c;
   box-shadow: 0 0 4px rgba(23, 72, 62, 0.4);
 }
+.search-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 440px;
+}
+
+.search-icon {
+  font-size: 20px;
+}
+
+.search-container .search-input {
+  flex: 1;
+  min-width: 0;
+}
     </style>
 </head>
 
