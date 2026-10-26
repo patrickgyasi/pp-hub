@@ -556,11 +556,13 @@ id="home-living">Rabbit Phone Stand</h2>
     rel="noopener noreferrer"
     aria-label="Contact PP Hub on WhatsApp"
   >
-    <img
-      src="https://cdn.simpleicons.org/whatsapp/FFFFFF"
-      alt=""
-      class="contact-icon"
-    >
+<img
+  src="https://cdn.simpleicons.org/whatsapp/FFFFFF"
+  class="contact-icon"
+  width="24"
+  height="24"
+>
+    
     <span>Contact Us on WhatsApp</span>
   </a>
 
@@ -573,6 +575,8 @@ id="home-living">Rabbit Phone Stand</h2>
       src="https://cdn.simpleicons.org/gmail/EA4335"
       alt=""
       class="contact-icon"
+       width:"24"
+        height:"24"
     >
     <span>Email PP Hub</span>
   </a>
