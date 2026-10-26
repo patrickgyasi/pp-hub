@@ -226,7 +226,7 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     height: auto;
     max-height: 110px;
     object-fit: contain;
-    margin: 0 auto 10px;
+    margin: 0 auto;
 }
 
 
@@ -416,6 +416,7 @@ font-weight:700;
         src="https://i.ibb.co/5W3gng0M/pp-hub-logo-transparent-clean.png"
         alt="PP Hub — Shop smart. Discover more."
     >
+<p class="brand-tagline">Shop smart. Discover more.</p>
     <p>Discover useful products at great prices.</p>
 
 </header>
