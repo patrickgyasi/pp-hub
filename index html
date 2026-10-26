@@ -254,6 +254,10 @@ footer {
     padding: 20px;
     margin-top: 30px;
     border-radius: 8px;
+line-height: 1.8;
+}
+footer p {
+    margin: 6px 0;
 }
     </style>
 </head>
@@ -393,6 +397,7 @@ id="home-living">Rabbit Phone Stand</h2>
     <footer>
         <p>PP Hub | Product discovery and buying guides</p>
 <p>Shop smart. Discover more with PP Hub.</p>
+<p>&copy; 2026 PP Hub. All rights reserved.</p>
     </footer>
 <script>
   const searchBox = document.getElementById("product-search");
