@@ -111,7 +111,7 @@ text-align: center;
         }
 .clear-button {
   background-color: #17483e;
-  color: white;
+  color: #17483e;
   border: none;
   padding: 10px 16px;
   border-radius: 6px;
