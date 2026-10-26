@@ -129,6 +129,10 @@ box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
 .clear-button:active {
     background-color: #d5e7dc;
     color: #17483e;
+    transform: scale(0.98);
+    box-shadow: none;
+
+    
 }
 .search-input {
   width: 100%;
