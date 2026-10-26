@@ -142,7 +142,7 @@ text-align: center;
   align-items: center;
   gap: 10px;
   max-width: 440px;
-margin-button:10px;
+margin-buttom:10px;
 }
 
 .search-icon {
