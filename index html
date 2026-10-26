@@ -12,8 +12,8 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background: #f5f5f5;
-            color: #222;
+            background-color: #f4f7f5;
+            color: #26352f;
         }
 
         header {
@@ -258,6 +258,10 @@ line-height: 1.8;
 }
 footer p {
     margin: 6px 0;
+}
+footer p:last-child {
+    font-size: 13px;
+    opacity: 0.85;
 }
     </style>
 </head>
