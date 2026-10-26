@@ -517,24 +517,37 @@ id="home-living">Rabbit Phone Stand</h2>
   <strong>To Build Is to Grow 🌱.</strong>
 </p>
 
+
+</div>
+
 <div class="sponsorship-contact">
   <a
-    class="whatsapp-link"
+    class="contact-link whatsapp-link"
     href="https://wa.me/233593274713?text=Hello%20PP%20Hub%2C%20I%20am%20interested%20in%20sponsoring%20or%20supporting%20your%20project."
     target="_blank"
     rel="noopener noreferrer"
+    aria-label="Contact PP Hub on WhatsApp"
   >
-    Contact Us on WhatsApp
+    <img
+      src="https://cdn.simpleicons.org/whatsapp/FFFFFF"
+      alt=""
+      class="contact-icon"
+    >
+    <span>Contact Us on WhatsApp</span>
   </a>
 
-  <p class="email-contact">
-    Prefer email?
-    <a href="mailto:patrick.k.gyasi071555@gmail.com">
-      Email PP Hub
-    </a>
-  </p>
-</div>
-
+  <a
+    class="contact-link email-link"
+    href="mailto:patrick.k.gyasi071555@gmail.com"
+    aria-label="Email PP Hub"
+  >
+    <img
+      src="https://cdn.simpleicons.org/gmail/EA4335"
+      alt=""
+      class="contact-icon"
+    >
+    <span>Email PP Hub</span>
+  </a>
 </div>
 
     </footer>
