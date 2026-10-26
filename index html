@@ -317,6 +317,44 @@ font-weight:700;
 }
 
 
+.sponsorship-contact {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.whatsapp-link {
+  display: inline-block;
+  padding: 12px 20px;
+  background-color: #176b4d;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.whatsapp-link:hover {
+  background-color: #105239;
+}
+
+.whatsapp-link:focus-visible,
+.email-contact a:focus-visible {
+  outline: 3px solid #e3b341;
+  outline-offset: 3px;
+}
+
+.email-contact {
+  margin-top: 14px;
+  color: #333333;
+  font-size: 14px;
+}
+
+.email-contact a {
+  color: #17483e;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
     </style>
 </head>
 
