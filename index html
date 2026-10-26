@@ -373,12 +373,7 @@ font-weight:700;
   margin: 0 auto;
 }
 
-.email-link,
-.email-link:link,
-.email-link:visited {
-  color: #17483e;
-  text-decoration: none;
-}
+
 
 .sponsorship-contact {
   display: flex;
@@ -388,7 +383,12 @@ font-weight:700;
   margin: 18px auto 0;
   width: 100%;
 }
-
+.email-link,
+.email-link:link,
+.email-link:visited {
+  color: #17483e;
+  text-decoration: none;
+}
 
     </style>
 </head>
