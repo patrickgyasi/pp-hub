@@ -307,7 +307,7 @@ footer p:last-child {
     placeholder="Search by product name or feature..."
   >
 </div>
->
+
 <button id="clear-search"class ="clear-button"type="button" style="display: none;">
   Clear Search
 </button>
