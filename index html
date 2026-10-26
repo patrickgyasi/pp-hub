@@ -248,7 +248,7 @@ margin-top: 15px;
 <nav class="site-nav">
     <a href="#products">All Products</a>
     <a href="#phone-accessories">Phone Accessories</a>
-    <a href="#home-living">Home &amp; Living</a>
+    <a href="#home-living">Home&Living</a>
 </nav>
     <main>
         <h2>Our Product Catalogue</h2>
@@ -322,7 +322,8 @@ id="products">
 </article>
 
             <article class="product">
-                <h2>Rabbit Phone Stand</h2>
+                <h2
+id="home-living">Rabbit Phone Stand</h2>
 
                 <a
                     href="https://www.jumia.com.gh/generic-rabbit-phone-stand-portable-desktop-phone-holder-300890803.html"
