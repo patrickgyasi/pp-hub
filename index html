@@ -454,12 +454,11 @@ if (matchCount === 0) {
   resultCount.textContent = "Showing " + matchCount +
     (matchCount === 1 ? " product" : " products");
 }
-
+  });
 clearButton.addEventListener("click", function() {
   searchBox.value = "";
   searchBox.dispatchEvent(new Event("input"));
 });
-  
 </script>
 </body>
 </html>
