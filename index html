@@ -135,7 +135,7 @@ text-align: center;
 
 .search-input:focus {
   border-color: #0f332c;
-  box-shadow: 0 0 4px rgba(23, 72, 62, 0.4);
+  box-shadow: 0 0 6px rgba(23, 72, 62, 0.35);
 }
 .search-container {
   display: flex;
