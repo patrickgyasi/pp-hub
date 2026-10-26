@@ -219,6 +219,17 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     letter-spacing: 1px;
 }
 
+.site-logo {
+    display: block;
+    width: 100%;
+    max-width: 220px;
+    height: auto;
+    max-height: 110px;
+    object-fit: contain;
+    margin: 0 auto 10px;
+}
+
+
 .site-header p {
     margin: 8px 0 0;
     font-size: 16px;
