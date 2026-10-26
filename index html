@@ -110,17 +110,25 @@ text-align: center;
             }
         }
 .clear-button {
-  background-color: #17483e;
   color: #17483e;
-  border: none;
   padding: 10px 16px;
-  border-radius: 6px;
   cursor: pointer;
   margin-top: 8px;
+background-color: #eaf2ee;
+color: #17483e;
+border: 1px solid #c8d9cf;
+border-radius: 6px;
+font-weight: 600;
+cursor: pointer;
+transition: background-color 0.2s ease;
 }
 
 .clear-button:hover {
   background-color: #0f332c;
+}
+.clear-button:active {
+    background-color: #d5e7dc;
+    color: #17483e;
 }
 .search-input {
   width: 100%;
