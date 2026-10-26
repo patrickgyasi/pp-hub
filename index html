@@ -422,6 +422,28 @@ id="home-living">Rabbit Phone Stand</h2>
         <p>PP Hub | Product discovery and buying guides</p>
 <p>Shop smart. Discover more with PP Hub.</p>
 <p>&copy; 2026 PP Hub. All rights reserved.</p>
+
+<div class="sponsorship">
+  <h3>Partner With PP Hub</h3>
+
+  <p>
+    Help us build a better product discovery
+    experience for shoppers in West Africa_Ghana and beyond.
+  </p>
+
+  <p>
+    We welcome sponsorship, strategic partnerships,
+    and voluntary support from individuals,
+    businesses, and organizations.
+  </p>
+
+  <p class="sponsorship-cta">
+    Interested in supporting our growth?
+    <br>
+    <strong>To build Is To Grow 🪴.</strong>
+  </p>
+</div>
+
     </footer>
 <script>
   const searchBox = document.getElementById("product-search");
