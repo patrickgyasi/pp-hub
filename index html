@@ -356,8 +356,8 @@ font-weight:700;
 }
 
 .sponsorship-contact .contact-icon {
-  width: 24px;
-  height: 24px;
+  width="24px;
+  height="24px;
   flex-shrink: 0;
 }
 
@@ -371,6 +371,13 @@ font-weight:700;
   min-height: 48px;
   box-sizing: border-box;
   margin: 0 auto;
+}
+
+.email-link,
+.email-link:link,
+.email-link:visited {
+  color: #17483e;
+  text-decoration: none;
 }
 
 .sponsorship-contact {
