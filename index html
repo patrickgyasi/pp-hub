@@ -579,19 +579,22 @@ id="home-living">Rabbit Phone Stand</h2>
   </a>
 
   
+
 <a
-  class="contact-link email-link"
   href="mailto:patrick.k.gyasi071555@gmail.com"
+  style="display:inline-flex; align-items:center; gap:10px; background:#ffffff; color:#17483e; padding:12px 16px; border:1px solid #c8ded3; border-radius:8px; text-decoration:none; font-weight:bold;"
 >
-  <img
-    src="https://cdn.simpleicons.org/gmail/EA4335"
-    alt=""
-    class="contact-icon"
-    width="24"
-    height="24"
-  >
-  <span style="color: #17483e;">Email PP Hub</span>
+  
+<img
+  src="https://cdn.simpleicons.org/gmail/EA4335"
+  alt=""
+  width="24"
+  height="24"
+  style="display:inline-block; width:24px; height:24px; object-fit:contain;"
+>
+<span style="color:#17483e;">Email PP Hub</span>
 </a>
+
 
 </div>
 
