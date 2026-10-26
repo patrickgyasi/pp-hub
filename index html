@@ -270,7 +270,7 @@ margin-top: 15px;
 </p>
 <p id="result-count">2 products found</p>
         <div class="product-grid"
-id="product">
+id="products">
 
             <article class="product">
                 <h2 id="phone-accessories">USB-C Adapter</h2>
