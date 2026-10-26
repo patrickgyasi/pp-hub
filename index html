@@ -273,7 +273,7 @@ margin-top: 15px;
 id="product">
 
             <article class="product">
-                <h2>USB-C Adapter</h2>
+                <h2 id="phone-accessories">USB-C Adapter</h2>
 
                 <a
                     href="https://www.jumia.com.gh/generic-usb-to-usb-c-adapter-fast-charging-datatransfer-otg-adapter-300890977.html"
