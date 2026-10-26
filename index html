@@ -459,7 +459,7 @@ clearButton.addEventListener("click", function() {
   searchBox.value = "";
   searchBox.dispatchEvent(new Event("input"));
 });
-  });
+  
 </script>
 </body>
 </html>
