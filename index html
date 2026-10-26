@@ -578,20 +578,21 @@ id="home-living">Rabbit Phone Stand</h2>
     <span>Contact Us on WhatsApp</span>
   </a>
 
-  <a
-    class="contact-link email-link"
-    href="mailto:patrick.k.gyasi071555@gmail.com"
-    aria-label="Email PP Hub"
+  
+<a
+  class="contact-link email-link"
+  href="mailto:patrick.k.gyasi071555@gmail.com"
+>
+  <img
+    src="https://cdn.simpleicons.org/gmail/EA4335"
+    alt=""
+    class="contact-icon"
+    width="24"
+    height="24"
   >
-    <img
-      src="https://cdn.simpleicons.org/gmail/EA4335"
-      alt=""
-      class="contact-icon"
-       width="24"
-        height="24"
-    >
-    <span>Email PP Hub</span>
-  </a>
+  <span style="color: #17483e;">Email PP Hub</span>
+</a>
+
 </div>
 
     </footer>
