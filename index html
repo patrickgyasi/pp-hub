@@ -279,6 +279,10 @@ footer p:last-child {
     font-size: 13px;
     opacity: 0.85;
 }
+.clear-button:focus-visible {
+    outline: 3px solid #f0b429;
+    outline-offset: 3px;
+}
     </style>
 </head>
 
