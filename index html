@@ -355,6 +355,34 @@ font-weight:700;
   text-decoration: underline;
 }
 
+.sponsorship-contact .contact-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.sponsorship-contact .contact-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 280px;
+  min-height: 48px;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+.sponsorship-contact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 18px auto 0;
+  width: 100%;
+}
+
+
     </style>
 </head>
 
