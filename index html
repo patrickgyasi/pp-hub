@@ -472,11 +472,31 @@ id="home-living">Rabbit Phone Stand</h2>
     businesses, and organizations.
   </p>
 
-  <p class="sponsorship-cta">
-    Interested in supporting our growth?
-    <br>
-    <strong>To build Is To Grow 🪴.</strong>
+  
+<p class="sponsorship-cta">
+  Interested in supporting our growth?
+  <br>
+  <strong>To Build Is to Grow 🌱.</strong>
+</p>
+
+<div class="sponsorship-contact">
+  <a
+    class="whatsapp-link"
+    href="https://wa.me/233593274713?text=Hello%20PP%20Hub%2C%20I%20am%20interested%20in%20sponsoring%20or%20supporting%20your%20project."
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    Contact Us on WhatsApp
+  </a>
+
+  <p class="email-contact">
+    Prefer email?
+    <a href="mailto:patrick.k.gyasi071555@gmail.com">
+      Email PP Hub
+    </a>
   </p>
+</div>
+
 </div>
 
     </footer>
