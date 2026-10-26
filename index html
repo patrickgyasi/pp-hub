@@ -154,7 +154,7 @@ box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
   align-items: center;
   gap: 10px;
   max-width: 440px;
-margin-buttom:10px;
+margin-bottom:10px;
 }
 
 .search-icon {
