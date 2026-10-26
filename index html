@@ -247,6 +247,14 @@ html {
 h2[id] {
     scroll-margin-top: 80px;
 }
+footer {
+    background: #17483e;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    margin-top: 30px;
+    border-radius: 8px;
+}
     </style>
 </head>
 
@@ -384,6 +392,7 @@ id="home-living">Rabbit Phone Stand</h2>
 
     <footer>
         <p>PP Hub | Product discovery and buying guides</p>
+<p>Shop smart. Discover more with PP Hub.</p>
     </footer>
 <script>
   const searchBox = document.getElementById("product-search");
