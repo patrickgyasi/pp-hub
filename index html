@@ -282,6 +282,39 @@ footer p:last-child {
     outline: 3px solid #f0b429;
     outline-offset: 3px;
 }
+
+.sponsorship {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #c8ded3;
+  border-radius: 12px;
+  background-color: #f4faf6;
+  text-align: center;
+}
+
+.sponsorship h3 {
+  margin-bottom: 10px;
+  color: #17483e;
+  font-size: 20px;
+}
+
+.sponsorship p {
+  margin: 10px 0;
+  line-height: 1.6;
+}
+
+.sponsorship-cta {
+  color: #17483e;
+}
+
+.sponsorship-cta strong {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 17px;
+  letter-spacing: 0.3px;
+}
+
     </style>
 </head>
 
