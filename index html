@@ -56,7 +56,7 @@ min-width: 0;
     display: block;
     margin: 10px auto;
 }
-        }
+        
 .product h2 {
     margin-top: 5px;
     margin-bottom: 12px;
