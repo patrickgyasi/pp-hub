@@ -311,8 +311,9 @@ footer p:last-child {
   display: inline-block;
   margin-top: 8px;
   color: #17483e;
-  font-size: 17px;
-  letter-spacing: 0.3px;
+  font-size: 18px;
+font-weight:700;
+  letter-spacing: 0.4px;
 }
 
 
