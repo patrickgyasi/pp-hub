@@ -222,6 +222,7 @@ margin-top: 15px;
 position: sticky;
 top: 0;
 z-index: 1000;
+background-color: #eaf2ee;
 }
 
 .site-nav a {
@@ -239,6 +240,12 @@ z-index: 1000;
 .site-nav a:focus-visible {
     outline: 2px solid #176b45;
     outline-offset: 3px;
+}
+html {
+    scroll-behavior: smooth;
+}
+h2[id] {
+    scroll-margin-top: 80px;
 }
     </style>
 </head>
