@@ -406,6 +406,36 @@ font-weight:700;
   text-decoration: none;
 }
 
+.site-logo {
+    display: block;
+    width: 100%;
+    max-width: 230px;
+    max-height: 120px;
+    height: auto;
+    object-fit: contain;
+    margin: 0 auto 8px;
+}
+
+.brand-tagline {
+    margin: 0;
+    color: #F7E4A1;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+    .site-logo {
+        max-width: 160px;
+        max-height: 85px;
+    }
+
+    .brand-tagline {
+        font-size: 14px;
+    }
+}
+
     </style>
 </head>
 
