@@ -222,8 +222,8 @@ box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 .site-logo {
     display: block;
     width: 100%;
-    max-width: 220px;
-    height: auto;
+    max-width: 260px;
+    height: 130px;
     max-height: 110px;
     object-fit: contain;
     margin: 0 auto;
