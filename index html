@@ -209,8 +209,8 @@ letter-spacing: 0.3px;
     padding: 30px 20px;
     border-radius: 12px;
     margin-bottom: 25px;
-border: 1px solid #2b6658;
-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+border: 1px solid #c9a44c;
+box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
 }
 
 .site-header h1 {
