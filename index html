@@ -137,8 +137,8 @@ box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
   width: 100%;
   max-width: 400px;
   padding: 12px;
-  border: 2px solid #17483e;
-  border-radius: 8px;
+  border: 2px solid #c9a44c;
+  border-radius: 10px;
   font-size: 16px;
   box-sizing: border-box;
   outline: none;
@@ -249,6 +249,7 @@ position: sticky;
 top: 0;
 z-index: 1000;
 background-color: #eaf2ee;
+border-bottom: 2px solid #c9a44c;
 }
 
 .site-nav a {
@@ -259,9 +260,15 @@ background-color: #eaf2ee;
     border-radius: 6px;
 }
 
-.site-nav a:hover {
+
+.site-nav a:hover,
+.site-nav a:active {
     background: #17483e;
-    color: white;
+    color: #f7e4a1;
+    transition: background-color 0.2s ease,
+                color 0.2s ease;
+}
+
 }
 .site-nav a:focus-visible {
     outline: 2px solid #176b45;
@@ -273,6 +280,16 @@ html {
 h2[id] {
     scroll-margin-top: 80px;
 }
+
+main > h2 {
+    color: #17483e;
+    text-align: center;
+    font-size: clamp(22px, 4vw, 28px);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #c9a44c;
+}
+
 footer {
     background: #17483e;
     color: white;
