@@ -35,7 +35,7 @@ gap: 20px;
 
 .product {
     background: white;
-    border: 1px solid #e0e5e2;
+    border: 1px solid #c9a44c;
     border-radius: 12px;
     padding: 18px;
     box-sizing: border-box;
@@ -144,9 +144,12 @@ box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
   outline: none;
 }
 
+
 .search-input:focus {
-  border-color: #0f332c;
-  box-shadow: 0 0 6px rgba(23, 72, 62, 0.35);
+    border-color: #c9a44c;
+    box-shadow: 0 0 0 3px rgba(201, 164, 76, 0.2);
+}
+
 }
 .search-container {
   display: flex;
