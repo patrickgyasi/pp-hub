@@ -1356,25 +1356,7 @@ const navLinks = document.querySelectorAll(".site-nav .nav-link");
 
 let activeCategory = "all";
 
-function filterCatalogue() {
-    const searchText = searchBox.value.trim().toLowerCase();
-    let visibleCount = 0;
 
-    // Filter the two products
-    productCards.forEach(function(card) {
-        const categoryMatches =
-            activeCategory === "all" ||
-            card.dataset.category === activeCategory;
-
-        const textMatches =
-            card.textContent.toLowerCase().includes(searchText);
-
-        const show = categoryMatches && textMatches;
-
-        card.style.display = show ? "" : "none";
-
-        if (show) visibleCount++;
-    });
 function filterCatalogue() {
     const searchText = searchBox.value.trim().toLowerCase();
     let visibleCount = 0;
