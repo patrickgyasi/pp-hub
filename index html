@@ -957,6 +957,31 @@ padding:20px;
     }
 }
 
+/* FINAL OVERRIDE: display the complete kitchen image */
+.category-grid .kitchen-category .category-image-wrap {
+    height: auto !important;
+    overflow: hidden;
+    background: #f4f7f5;
+}
+
+.category-grid .kitchen-category .category-image-wrap img.category-image {
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    display: block;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+@media (max-width: 520px) {
+    .category-grid .kitchen-category .category-image-wrap img.category-image {
+        height: auto !important;
+        max-height: none !important;
+    }
+}
+
     </style>
 </head>
 
