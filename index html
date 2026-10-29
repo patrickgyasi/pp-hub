@@ -1160,6 +1160,46 @@ id="home-living">Rabbit Phone Stand</h2>
 
 </section>
 
+<!-- HOME APPLIANCES CATEGORY -->
+<section class="category-card kitchen-category" id="home-appliances">
+
+  <div class="category-image-wrap">
+    <img
+      src="https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=900&q=80"
+      alt="Home appliances and household essentials"
+      class="category-image"
+      loading="lazy"
+    >
+    <span class="category-label">SHOP THE CATEGORY</span>
+  </div>
+
+  <div class="category-content">
+    <p class="category-eyebrow">SMART PICKS FOR YOUR HOME</p>
+
+    <h2>Home Appliances</h2>
+
+    <p class="category-description">
+      Discover useful appliances and household equipment
+      to support everyday cooking, cleaning and home living.
+    </p>
+
+    <a
+      href="https://jmia.io/mPR70UE"
+      target="_blank"
+      rel="noopener noreferrer sponsored"
+      class="category-button"
+    >
+      Explore Home Appliances →
+    </a>
+
+    <p class="category-note">
+      Browse the collection on Jumia Ghana.
+    </p>
+  </div>
+
+</section>
+
+
 </div>
 
     </main>
