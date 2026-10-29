@@ -1341,9 +1341,9 @@ id="products">
 </div>
 
     </footer>
+
+
 <script>
-
-
 const searchBox = document.getElementById("product-search");
 const productGrid = document.getElementById("products");
 const productCards = document.querySelectorAll("#products .product");
