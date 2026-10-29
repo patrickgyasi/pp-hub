@@ -1463,10 +1463,12 @@ navLinks.forEach(function(link) {
     });
 });
 
-/* Search within the selected category */
-searchBox.addEventListener("input", filterCatalogue);
+/* Search products and categories as the user types */
+searchBox.addEventListener("input", function() {
+    filterCatalogue();
+});
 
-/* Clear search without changing the selected category */
+/* Clear search and refresh the catalogue */
 clearButton.addEventListener("click", function() {
     searchBox.value = "";
     filterCatalogue();
