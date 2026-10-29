@@ -715,6 +715,83 @@ padding:20px;
   text-align: center;
 }
 
+/* Category grid — match the product grid */
+#affiliate-products .product-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(min(100%, 200px), 1fr)
+    );
+    gap: 18px;
+    width: 100%;
+    margin: 20px auto;
+    align-items: stretch;
+}
+
+/* Category card */
+#affiliate-products .product.affiliate-card {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    padding: 14px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Compact category image */
+#affiliate-products .category-image {
+    display: block;
+    width: 100%;
+    height: 125px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 7px;
+    margin: 0 auto 12px;
+}
+
+/* Category title */
+#affiliate-products .affiliate-card h3 {
+    margin: 5px 0 10px;
+}
+
+/* Description */
+#affiliate-products .affiliate-card p {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Button */
+#affiliate-products .affiliate-card .buy-link {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 8px;
+    margin-top: auto;
+    border-radius: 6px;
+    text-align: center;
+}
+
+/* Mobile layout */
+@media (max-width: 520px) {
+    #affiliate-products .product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    #affiliate-products .product.affiliate-card {
+        padding: 9px;
+    }
+
+    #affiliate-products .category-image {
+        height: 100px;
+    }
+}
+
     </style>
 </head>
 
