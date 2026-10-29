@@ -457,13 +457,18 @@ font-weight:700;
 }
 
 
+
+
 .category-grid .category-card img {
   display: block;
   width: 100%;
+  max-width: none;
   height: auto;
-  max-height: 360px;
+  max-height: none;
   object-fit: contain;
   object-position: center;
+  margin: 0;
+  padding: 0;
   background: #f5f5dc;
 }
 
@@ -534,11 +539,6 @@ padding:20px;
   margin: 20px 16px 10px;
 }
 
-.category-grid .category-card p {
-  color: #f5f5dc;
-  line-height: 1.7;
-  margin: 0 18px 20px;
-}
 
 .category-grid .category-card .buy-link {
   display: block;
@@ -557,6 +557,21 @@ padding:20px;
     grid-template-columns: 1fr;
     gap: 16px;
   }
+}
+
+.category-grid .category-card p {
+  display: block;
+  width: auto;
+  max-width: 850px;
+  margin: 0 auto 24px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  color: #17483e !important;
+  text-align: center;
+  line-height: 1.7;
+  font-size: 16px;
+  visibility: visible;
+  opacity: 1;
 }
 
 .category-grid .category-card {
@@ -589,6 +604,115 @@ padding:20px;
   border-radius: 7px;
   text-align: center;
   font-weight: bold;
+}
+
+/* PP Hub - Kitchen category */
+.kitchen-category {
+  padding: 0;
+  overflow: hidden;
+  background: #17483e;
+  color: #f5f5dc;
+  border: 1px solid #c9a44c;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  margin: 28px 0;
+}
+
+.kitchen-category .category-image-wrap {
+  position: relative;
+  width: 100%;
+  background: #e9eee9;
+}
+
+.kitchen-category .category-image {
+  display: block;
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+}
+
+.kitchen-category .category-label {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  background: #17483e;
+  color: #f5f5dc;
+  border: 1px solid #c9a44c;
+  border-radius: 4px;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.kitchen-category .category-content {
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.kitchen-category .category-eyebrow {
+  color: #c9a44c;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  margin: 0 0 8px;
+}
+
+.kitchen-category h2 {
+  color: #c9a44c;
+  font-size: 26px;
+  margin: 0 0 12px;
+}
+
+.kitchen-category .category-description {
+  max-width: 520px;
+  margin: 0 auto 20px;
+  color: #f5f5dc;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.kitchen-category .category-button {
+  display: block;
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 14px 18px;
+  background: #c9a44c;
+  color: #17483e;
+  border-radius: 7px;
+  text-decoration: none;
+  font-weight: bold;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+.kitchen-category .category-note {
+  margin: 12px 0 0;
+  color: #d8e4dd;
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .kitchen-category .category-image {
+    height: 200px;
+  }
+
+  .kitchen-category .category-content {
+    padding: 20px 15px;
+  }
+
+  .kitchen-category h2 {
+    font-size: 23px;
+  }
+}
+
+.category-grid .category-card {
+  background: #f5f5dc !important;
+}
+
+.category-grid .category-card h2 {
+  color: #17483e !important;
+  text-align: center;
 }
 
     </style>
@@ -733,28 +857,42 @@ id="home-living">Rabbit Phone Stand</h2>
 
         </div>
 <div class="category-grid">
-<section class="category-card" id="kitchen-accessories">
-  <img
-    src="https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=1000&q=80"
-    alt="Kitchen accessories and cooking tools"
-  >
 
-  <h2>Kitchen Accessories</h2>
+<section class="category-card kitchen-category" id="kitchen-accessories">
 
-  <p>
-    Discover useful kitchen tools, cooking essentials,
-    and practical accessories for your home.
-  </p>
+  <div class="category-image-wrap">
+    <img
+      src="https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=1200&q=85"
+      alt="Kitchen cabinets, cooking equipment and kitchen essentials"
+      class="category-image"
+    >
+    <span class="category-label">SHOP THE CATEGORY</span>
+  </div>
 
-  <a
-    href="https://jmia.io/1TMj4bz"
-    target="_blank"
-    rel="noopener noreferrer"
-    class="buy-link"
-  >
-    Explore on Jumia
-  </a>
+  <div class="category-content">
+    <p class="category-eyebrow">SMART PICKS FOR YOUR HOME</p>
+
+    <h2>Kitchen Accessories</h2>
+
+    <p class="category-description">
+      Discover practical kitchen tools, cooking essentials,
+      storage solutions and useful accessories for everyday living.
+    </p>
+
+    <a
+      href="https://jmia.io/1TMj4bz"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="category-button"
+    >
+      Explore Kitchen Products <span aria-hidden="true">→</span>
+    </a>
+
+    <p class="category-note">Browse the selection on Jumia Ghana.</p>
+  </div>
+
 </section>
+
 </div>
 
     </main>
