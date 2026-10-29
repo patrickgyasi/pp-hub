@@ -1037,8 +1037,8 @@ padding:20px;
         <div class="product-grid"
 id="products">
 
-            <article class="product">
-                <h2 id="phone-accessories">USB-C Adapter</h2>
+            
+<article class="product" data-category="phone-accessories">
 
                 <a
                     href="https://www.jumia.com.gh/generic-usb-to-usb-c-adapter-fast-charging-datatransfer-otg-adapter-300890977.html"
@@ -1086,9 +1086,7 @@ id="products">
     </a>
 </article>
 
-            <article class="product">
-                <h2
-id="home-living">Rabbit Phone Stand</h2>
+            <article class="product" data-category="phone-accessories">
 
                 <a
                     href="https://www.jumia.com.gh/generic-rabbit-phone-stand-portable-desktop-phone-holder-300890803.html"
@@ -1138,7 +1136,9 @@ id="home-living">Rabbit Phone Stand</h2>
         </div>
 <div class="category-grid">
 
-<section class="category-card kitchen-category" id="kitchen-accessories">
+<section class="category-card kitchen-category"
+         id="kitchen-accessories"
+         data-category="kitchen-accessories">
 
   <div class="category-image-wrap">
     <img
@@ -1174,7 +1174,9 @@ id="home-living">Rabbit Phone Stand</h2>
 </section>
 
 <!-- HOME APPLIANCES CATEGORY -->
-<section class="category-card kitchen-category" id="home-appliances">
+<section class="category-card kitchen-category"
+         id="home-appliances"
+         data-category="home-appliances">
 
   <div class="category-image-wrap">
     <img
