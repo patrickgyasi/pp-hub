@@ -1340,11 +1340,11 @@ id="products">
 
     </footer>
 
-<script>
-/* PP HUB: PRODUCT AND CATEGORY FILTERING */
 
 const searchBox = document.getElementById("product-search");
+const productGrid = document.getElementById("products");
 const productCards = document.querySelectorAll("#products .product");
+const categoryGrid = document.querySelector(".category-grid");
 const categoryCards = document.querySelectorAll(".category-grid .category-card");
 const noResults = document.getElementById("no-results");
 const resultCount = document.getElementById("result-count");
@@ -1353,97 +1353,99 @@ const navLinks = document.querySelectorAll(".site-nav .nav-link");
 
 let activeCategory = "all";
 
-/* Filter both product cards and category cards */
 function filterCatalogue() {
     const searchText = searchBox.value.trim().toLowerCase();
-    let visibleProducts = 0;
-    let visibleCategories = 0;
+    let visibleCount = 0;
 
+    // Filter the two products
     productCards.forEach(function(card) {
-        const matchesCategory =
+        const categoryMatches =
             activeCategory === "all" ||
             card.dataset.category === activeCategory;
 
-        const matchesSearch =
+        const textMatches =
             card.textContent.toLowerCase().includes(searchText);
 
-        const show = matchesCategory && matchesSearch;
+        const show = categoryMatches && textMatches;
 
         card.style.display = show ? "" : "none";
 
-        if (show) visibleProducts++;
+        if (show) visibleCount++;
     });
 
+    // Filter the category cards
     categoryCards.forEach(function(card) {
-        const matchesCategory =
+        const categoryMatches =
             activeCategory === "all" ||
             card.dataset.category === activeCategory;
 
-        const matchesSearch =
+        const textMatches =
             card.textContent.toLowerCase().includes(searchText);
 
-        const show = matchesCategory && matchesSearch;
+        const show = categoryMatches && textMatches;
 
         card.style.display = show ? "" : "none";
 
-        if (show) visibleCategories++;
+        if (show) visibleCount++;
     });
 
-    const totalVisible = visibleProducts + visibleCategories;
+    // Hide empty grids when a category is selected
+    const productsVisible = Array.from(productCards).some(
+        card => card.style.display !== "none"
+    );
 
-    noResults.style.display =
-        totalVisible === 0 ? "block" : "none";
+    const categoriesVisible = Array.from(categoryCards).some(
+        card => card.style.display !== "none"
+    );
 
-    resultCount.textContent =
-        totalVisible === 0
-            ? "No matching products or categories found"
-            : "Showing " + totalVisible +
-              (totalVisible === 1 ? " result" : " results");
+    productGrid.style.display = productsVisible ? "" : "none";
+    categoryGrid.style.display = categoriesVisible ? "" : "none";
 
-    clearButton.style.display =
-        searchText ? "inline-block" : "none";
+    // Update search results
+    noResults.style.display = visibleCount === 0 ? "block" : "none";
+
+    resultCount.textContent = visibleCount === 0
+        ? "No matching products or categories found"
+        : "Showing " + visibleCount +
+          (visibleCount === 1 ? " result" : " results");
+
+    clearButton.style.display = searchText ? "inline-block" : "none";
 }
 
-/* Update the selected navigation link */
-function setActiveLink(link) {
-    navLinks.forEach(function(item) {
-        item.classList.toggle("active", item === link);
-    });
-}
-
-/* Navigation behaviour */
+// Navigation
 navLinks.forEach(function(link) {
     link.addEventListener("click", function(event) {
         const target = link.getAttribute("href");
 
+        const categories = {
+            "#products": "all",
+            "#phone-accessories": "phone-accessories",
+            "#electronics": "electronics",
+            "#home-appliances": "home-appliances",
+            "#kitchen-accessories": "kitchen-accessories"
+        };
+
+        if (!(target in categories)) return;
+
         event.preventDefault();
+        activeCategory = categories[target];
 
-        if (target === "#products") {
-            activeCategory = "all";
-        } else if (target === "#phone-accessories") {
-            activeCategory = "phone-accessories";
-} else if (target === "#home-appliances") {
-    activeCategory = "home-appliances";
-} else if (target === "#electronics") {
-    activeCategory = "electronics";
-} else if (target === "#kitchen-accessories") {
-         else {
-            return;
-        }
+        navLinks.forEach(function(item) {
+            item.classList.toggle("active", item === link);
+        });
 
-        setActiveLink(link);
         filterCatalogue();
+        history.replaceState(null, "", target);
 
-        /* Scroll to the matching visible section */
-        if (target === "#products") {
-            document.getElementById("products").scrollIntoView({
+        if (activeCategory === "all" ||
+            activeCategory === "phone-accessories") {
+            productGrid.scrollIntoView({
                 behavior: "smooth",
                 block: "start"
             });
         } else {
-            const selectedCard = document.querySelector(
-                '.category-grid [data-category="' +
-                activeCategory + '"]'
+            const selectedCard = document.getElementById(
+                activeCategory
             );
 
             if (selectedCard) {
@@ -1451,33 +1453,24 @@ navLinks.forEach(function(link) {
                     behavior: "smooth",
                     block: "start"
                 });
-            } else if (activeCategory === "phone-accessories") {
-                document.getElementById("products").scrollIntoView({
-                    behavior: "smooth",
-                    block: "start"
-                });
             }
         }
-
-        history.replaceState(null, "", target);
     });
 });
 
-/* Search products and categories as the user types */
-searchBox.addEventListener("input", function() {
-    filterCatalogue();
-});
+// Search updates immediately as the user types
+searchBox.addEventListener("input", filterCatalogue);
 
-/* Clear search and refresh the catalogue */
+// Clear the search while keeping the selected category
 clearButton.addEventListener("click", function() {
     searchBox.value = "";
     filterCatalogue();
     searchBox.focus();
 });
 
-/* Initial display */
+// Initial display
 filterCatalogue();
-</script>
+
 
 </body>
 </html>
