@@ -1350,6 +1350,106 @@ function updateActiveNavigation() {
 window.addEventListener("hashchange", updateActiveNavigation);
 updateActiveNavigation();
 
+/* PP HUB PRODUCT SEARCH AND CATEGORY NAVIGATION */
+
+const searchBox = document.getElementById("product-search");
+const products = document.querySelectorAll("#products .product");
+const noResults = document.getElementById("no-results");
+const resultCount = document.getElementById("result-count");
+const clearButton = document.getElementById("clear-search");
+const navLinks = document.querySelectorAll(".site-nav .nav-link");
+
+let activeCategory = "all";
+
+/* Filter products by category and search text */
+function filterProducts() {
+    const searchText = searchBox.value.trim().toLowerCase();
+    let matchCount = 0;
+
+    products.forEach(function(product) {
+        const productText = product.textContent.toLowerCase();
+
+        const matchesSearch =
+            productText.includes(searchText);
+
+        const matchesCategory =
+            activeCategory === "all" ||
+            product.dataset.category === activeCategory;
+
+        const shouldShow =
+            matchesSearch && matchesCategory;
+
+        product.style.display = shouldShow ? "" : "none";
+
+        if (shouldShow) {
+            matchCount++;
+        }
+    });
+
+    clearButton.style.display =
+        searchText ? "inline-block" : "none";
+
+    noResults.style.display =
+        matchCount === 0 ? "block" : "none";
+
+    resultCount.textContent =
+        matchCount === 0
+            ? "No products found"
+            : "Showing " + matchCount +
+              (matchCount === 1 ? " product" : " products");
+}
+
+/* Search products as the user types */
+searchBox.addEventListener("input", filterProducts);
+
+/* Clear search and restore the selected category */
+clearButton.addEventListener("click", function() {
+    searchBox.value = "";
+    filterProducts();
+    searchBox.focus();
+});
+
+/* Navigation actions */
+navLinks.forEach(function(link) {
+    link.addEventListener("click", function() {
+        const target = link.getAttribute("href");
+
+        if (target === "#products") {
+            activeCategory = "all";
+            filterProducts();
+        }
+
+        if (target === "#phone-accessories") {
+            activeCategory = "phone-accessories";
+            filterProducts();
+        }
+
+        navLinks.forEach(function(item) {
+            item.classList.remove("active");
+        });
+
+        link.classList.add("active");
+    });
+});
+
+/* Keep navigation highlight in sync with the URL */
+function updateActiveNavigation() {
+    const currentHash = window.location.hash;
+
+    navLinks.forEach(function(link) {
+        link.classList.toggle(
+            "active",
+            link.getAttribute("href") === currentHash
+        );
+    });
+}
+
+window.addEventListener("hashchange", updateActiveNavigation);
+
+/* Initial display */
+filterProducts();
+updateActiveNavigation();
+
 </script>
 </body>
 </html>
