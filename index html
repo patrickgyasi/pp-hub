@@ -1013,6 +1013,7 @@ padding:20px;
     <a href="#phone-accessories" class="nav-link">Phone Accessories</a>
     <a href="#home-appliances" class="nav-link">Home Appliances</a>
     <a href="#kitchen-accessories" class="nav-link">Kitchen Accessories</a>
+<a href="#electronics" class="nav-link">Electronics</a>
 </nav>
 
     <main>
@@ -1213,6 +1214,39 @@ id="products">
   </div>
 
 </section>
+<!-- ELECTRONICS CATEGORY --><section class="category-card kitchen-category"
+         id="electronics"
+         data-category="electronics">  <div class="category-image-wrap">
+    <img
+      src="YOUR_ELECTRONICS_IMAGE_URL"
+      alt="Electronics and technology accessories"
+      class="category-image"
+      loading="lazy"
+    >
+    <span class="category-label">SHOP THE CATEGORY</span>
+  </div>  <div class="category-content">
+    <p class="category-eyebrow">SMART TECH PICKS</p><h2>Electronics</h2>
+
+<p class="category-description">
+  Explore useful electronics, phone accessories,
+  audio devices, charging accessories and everyday
+  technology products.
+</p>
+
+<a
+  href="YOUR_ELECTRONICS_AFFILIATE_LINK"
+  target="_blank"
+  rel="noopener noreferrer sponsored"
+  class="category-button"
+>
+  Explore Electronics →
+</a>
+
+<p class="category-note">
+  PP Hub may earn a commission from qualifying purchases.
+</p>
+
+  </div></section>
 
 
 </div>
@@ -1370,11 +1404,12 @@ navLinks.forEach(function(link) {
             activeCategory = "all";
         } else if (target === "#phone-accessories") {
             activeCategory = "phone-accessories";
-        } else if (target === "#home-appliances") {
-            activeCategory = "home-appliances";
-        } else if (target === "#kitchen-accessories") {
-            activeCategory = "kitchen-accessories";
-        } else {
+} else if (target === "#home-appliances") {
+    activeCategory = "home-appliances";
+} else if (target === "#electronics") {
+    activeCategory = "electronics";
+} else if (target === "#kitchen-accessories") {
+         else {
             return;
         }
 
