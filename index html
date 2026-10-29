@@ -1375,8 +1375,24 @@ function filterCatalogue() {
 
         if (show) visibleCount++;
     });
+function filterCatalogue() {
+    const searchText = searchBox.value.trim().toLowerCase();
+    let visibleCount = 0;
 
-    // Filter the category cards
+    productCards.forEach(function(card) {
+        const categoryMatches =
+            activeCategory === "all" ||
+            card.dataset.category === activeCategory;
+
+        const textMatches =
+            card.textContent.toLowerCase().includes(searchText);
+
+        const show = categoryMatches && textMatches;
+        card.style.display = show ? "flex" : "none";
+
+        if (show) visibleCount++;
+    });
+
     categoryCards.forEach(function(card) {
         const categoryMatches =
             activeCategory === "all" ||
@@ -1386,13 +1402,11 @@ function filterCatalogue() {
             card.textContent.toLowerCase().includes(searchText);
 
         const show = categoryMatches && textMatches;
-
-        card.style.display = show ? "" : "none";
+        card.style.display = show ? "flex" : "none";
 
         if (show) visibleCount++;
     });
 
-    // Hide empty grids when a category is selected
     const productsVisible = Array.from(productCards).some(
         card => card.style.display !== "none"
     );
@@ -1404,15 +1418,17 @@ function filterCatalogue() {
     productGrid.style.display = productsVisible ? "" : "none";
     categoryGrid.style.display = categoriesVisible ? "" : "none";
 
-    // Update search results
-    noResults.style.display = visibleCount === 0 ? "block" : "none";
+    noResults.style.display =
+        visibleCount === 0 ? "block" : "none";
 
-    resultCount.textContent = visibleCount === 0
-        ? "No matching products or categories found"
-        : "Showing " + visibleCount +
-          (visibleCount === 1 ? " result" : " results");
+    resultCount.textContent =
+        visibleCount === 0
+            ? "No matching products or categories found"
+            : "Showing " + visibleCount +
+              (visibleCount === 1 ? " result" : " results");
 
-    clearButton.style.display = searchText ? "inline-block" : "none";
+    clearButton.style.display =
+        searchText ? "inline-block" : "none";
 }
 
 // Navigation
