@@ -832,15 +832,28 @@ padding:20px;
     background: #f4f7f5;
 }
 
+
+/* Show the complete category image */
 .category-grid .category-card .category-image {
     display: block;
     width: 100%;
-    height: 125px;
-    max-height: 125px;
-    object-fit: cover;
+    height: 140px;
+    max-height: none;
+    object-fit: contain;
     object-position: center;
+    background: #f4f7f5;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+}
+
+/* Mobile image size */
+@media (max-width: 520px) {
+    .category-grid .category-card .category-image {
+        height: 110px;
+        max-height: none;
+        object-fit: contain;
+    }
 }
 
 /* Small image label */
