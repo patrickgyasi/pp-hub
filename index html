@@ -982,6 +982,17 @@ padding:20px;
     }
 }
 
+.site-nav .nav-link.active {
+    background: #17483e;
+    color: #f7e4a1;
+    border-bottom: 2px solid #c9a44c;
+}
+
+.site-nav .nav-link.active:focus-visible {
+    outline: 2px solid #176b45;
+    outline-offset: 3px;
+}
+
     </style>
 </head>
 
@@ -996,14 +1007,14 @@ padding:20px;
 
 
 </header>
-<nav class="site-nav">
-    <a href="#products">All Products</a>
-    <a href="#phone-accessories">Phone Accessories</a>
-    
-<a href="#home-appliances">Home Appliances</a>
 
-<a href="#kitchen-accessories">Kitchen Accessories</a>
+<nav class="site-nav">
+    <a href="#products" class="nav-link">All Products</a>
+    <a href="#phone-accessories" class="nav-link">Phone Accessories</a>
+    <a href="#home-appliances" class="nav-link">Home Appliances</a>
+    <a href="#kitchen-accessories" class="nav-link">Kitchen Accessories</a>
 </nav>
+
     <main>
         <h2>Our Product Catalogue</h2>
 <div class="search-container">
@@ -1310,6 +1321,35 @@ clearButton.addEventListener("click", function() {
   searchBox.value = "";
   searchBox.dispatchEvent(new Event("input"));
 });
+
+/* PP Hub category navigation */
+const navLinks = document.querySelectorAll(".site-nav .nav-link");
+
+navLinks.forEach(function (link) {
+    link.addEventListener("click", function () {
+        navLinks.forEach(function (item) {
+            item.classList.remove("active");
+        });
+
+        link.classList.add("active");
+    });
+});
+
+/* Highlight the matching section when using browser navigation */
+function updateActiveNavigation() {
+    const currentHash = window.location.hash;
+
+    navLinks.forEach(function (link) {
+        link.classList.toggle(
+            "active",
+            link.getAttribute("href") === currentHash
+        );
+    });
+}
+
+window.addEventListener("hashchange", updateActiveNavigation);
+updateActiveNavigation();
+
 </script>
 </body>
 </html>
