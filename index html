@@ -1285,75 +1285,13 @@ id="home-living">Rabbit Phone Stand</h2>
 </div>
 
     </footer>
+
 <script>
-  const searchBox = document.getElementById("product-search");
-  const products = document.querySelectorAll(".product");
-const noResults = document.getElementById("no-results");
-const resultCount = document.getElementById("result-count");
-const clearButton = document.getElementById("clear-search");
-  searchBox.addEventListener("input", function() {
-clearButton.style.display =
-  searchBox.value.length > 0 ? "inline-block" : "none";
-    const searchText = searchBox.value.toLowerCase();
-let matchCount = 0;
-    products.forEach(function(product) {
-      const productText = product.textContent.toLowerCase();
-
-      if (productText.includes(searchText)) {
-        product.style.display = "";
- matchCount++     } else {
-        product.style.display = "none";
-      }
-    });
-  if (matchCount === 0) {
-    noResults.style.display = "none";
-  } else {
-    noResults.style.display = "none";
-  }
-if (matchCount === 0) {
-  resultCount.textContent = "No products found";
-} else {
-  resultCount.textContent = "Showing " + matchCount +
-    (matchCount === 1 ? " product" : " products");
-}
-  });
-clearButton.addEventListener("click", function() {
-  searchBox.value = "";
-  searchBox.dispatchEvent(new Event("input"));
-});
-
-/* PP Hub category navigation */
-const navLinks = document.querySelectorAll(".site-nav .nav-link");
-
-navLinks.forEach(function (link) {
-    link.addEventListener("click", function () {
-        navLinks.forEach(function (item) {
-            item.classList.remove("active");
-        });
-
-        link.classList.add("active");
-    });
-});
-
-/* Highlight the matching section when using browser navigation */
-function updateActiveNavigation() {
-    const currentHash = window.location.hash;
-
-    navLinks.forEach(function (link) {
-        link.classList.toggle(
-            "active",
-            link.getAttribute("href") === currentHash
-        );
-    });
-}
-
-window.addEventListener("hashchange", updateActiveNavigation);
-updateActiveNavigation();
-
-/* PP HUB PRODUCT SEARCH AND CATEGORY NAVIGATION */
+/* PP HUB: PRODUCT AND CATEGORY FILTERING */
 
 const searchBox = document.getElementById("product-search");
-const products = document.querySelectorAll("#products .product");
+const productCards = document.querySelectorAll("#products .product");
+const categoryCards = document.querySelectorAll(".category-grid .category-card");
 const noResults = document.getElementById("no-results");
 const resultCount = document.getElementById("result-count");
 const clearButton = document.getElementById("clear-search");
@@ -1361,95 +1299,128 @@ const navLinks = document.querySelectorAll(".site-nav .nav-link");
 
 let activeCategory = "all";
 
-/* Filter products by category and search text */
-function filterProducts() {
+/* Filter both product cards and category cards */
+function filterCatalogue() {
     const searchText = searchBox.value.trim().toLowerCase();
-    let matchCount = 0;
+    let visibleProducts = 0;
+    let visibleCategories = 0;
 
-    products.forEach(function(product) {
-        const productText = product.textContent.toLowerCase();
-
-        const matchesSearch =
-            productText.includes(searchText);
-
+    productCards.forEach(function(card) {
         const matchesCategory =
             activeCategory === "all" ||
-            product.dataset.category === activeCategory;
+            card.dataset.category === activeCategory;
 
-        const shouldShow =
-            matchesSearch && matchesCategory;
+        const matchesSearch =
+            card.textContent.toLowerCase().includes(searchText);
 
-        product.style.display = shouldShow ? "" : "none";
+        const show = matchesCategory && matchesSearch;
 
-        if (shouldShow) {
-            matchCount++;
-        }
+        card.style.display = show ? "" : "none";
+
+        if (show) visibleProducts++;
     });
+
+    categoryCards.forEach(function(card) {
+        const matchesCategory =
+            activeCategory === "all" ||
+            card.dataset.category === activeCategory;
+
+        const matchesSearch =
+            card.textContent.toLowerCase().includes(searchText);
+
+        const show = matchesCategory && matchesSearch;
+
+        card.style.display = show ? "" : "none";
+
+        if (show) visibleCategories++;
+    });
+
+    const totalVisible = visibleProducts + visibleCategories;
+
+    noResults.style.display =
+        totalVisible === 0 ? "block" : "none";
+
+    resultCount.textContent =
+        totalVisible === 0
+            ? "No matching products or categories found"
+            : "Showing " + totalVisible +
+              (totalVisible === 1 ? " result" : " results");
 
     clearButton.style.display =
         searchText ? "inline-block" : "none";
-
-    noResults.style.display =
-        matchCount === 0 ? "block" : "none";
-
-    resultCount.textContent =
-        matchCount === 0
-            ? "No products found"
-            : "Showing " + matchCount +
-              (matchCount === 1 ? " product" : " products");
 }
 
-/* Search products as the user types */
-searchBox.addEventListener("input", filterProducts);
+/* Update the selected navigation link */
+function setActiveLink(link) {
+    navLinks.forEach(function(item) {
+        item.classList.toggle("active", item === link);
+    });
+}
 
-/* Clear search and restore the selected category */
-clearButton.addEventListener("click", function() {
-    searchBox.value = "";
-    filterProducts();
-    searchBox.focus();
-});
-
-/* Navigation actions */
+/* Navigation behaviour */
 navLinks.forEach(function(link) {
-    link.addEventListener("click", function() {
+    link.addEventListener("click", function(event) {
         const target = link.getAttribute("href");
+
+        event.preventDefault();
 
         if (target === "#products") {
             activeCategory = "all";
-            filterProducts();
-        }
-
-        if (target === "#phone-accessories") {
+        } else if (target === "#phone-accessories") {
             activeCategory = "phone-accessories";
-            filterProducts();
+        } else if (target === "#home-appliances") {
+            activeCategory = "home-appliances";
+        } else if (target === "#kitchen-accessories") {
+            activeCategory = "kitchen-accessories";
+        } else {
+            return;
         }
 
-        navLinks.forEach(function(item) {
-            item.classList.remove("active");
-        });
+        setActiveLink(link);
+        filterCatalogue();
 
-        link.classList.add("active");
+        /* Scroll to the matching visible section */
+        if (target === "#products") {
+            document.getElementById("products").scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+        } else {
+            const selectedCard = document.querySelector(
+                '.category-grid [data-category="' +
+                activeCategory + '"]'
+            );
+
+            if (selectedCard) {
+                selectedCard.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            } else if (activeCategory === "phone-accessories") {
+                document.getElementById("products").scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            }
+        }
+
+        history.replaceState(null, "", target);
     });
 });
 
-/* Keep navigation highlight in sync with the URL */
-function updateActiveNavigation() {
-    const currentHash = window.location.hash;
+/* Search within the selected category */
+searchBox.addEventListener("input", filterCatalogue);
 
-    navLinks.forEach(function(link) {
-        link.classList.toggle(
-            "active",
-            link.getAttribute("href") === currentHash
-        );
-    });
-}
-
-window.addEventListener("hashchange", updateActiveNavigation);
+/* Clear search without changing the selected category */
+clearButton.addEventListener("click", function() {
+    searchBox.value = "";
+    filterCatalogue();
+    searchBox.focus();
+});
 
 /* Initial display */
-filterProducts();
-updateActiveNavigation();
-
+filterCatalogue();
 </script>
+
 </body>
 </html>
