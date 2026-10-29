@@ -1471,6 +1471,49 @@ clearButton.addEventListener("click", function() {
 
 // Initial display
 filterCatalogue();
+
+/* PP Hub: Local affiliate click tracking */
+const affiliateLinks = document.querySelectorAll(
+    'a[href*="jmia.io"]'
+);
+
+affiliateLinks.forEach(function(link) {
+    link.addEventListener("click", function() {
+        const category =
+            link.closest(".category-card")
+                ?.dataset.category || "other";
+
+        const storageKey = "ppHubClicks";
+        let clicks = {};
+
+        try {
+            clicks = JSON.parse(
+                localStorage.getItem(storageKey) || "{}"
+            );
+        } catch (error) {
+            clicks = {};
+        }
+
+        clicks[category] = (clicks[category] || 0) + 1;
+
+        try {
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify(clicks)
+            );
+        } catch (error) {
+            console.log("Click count could not be saved.");
+        }
+
+        console.log(
+            "PP Hub affiliate click:",
+            category,
+            "Total:",
+            clicks[category]
+        );
+    });
+});
+
 </script>
 
 </body>
