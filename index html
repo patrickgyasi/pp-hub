@@ -999,7 +999,9 @@ padding:20px;
 <nav class="site-nav">
     <a href="#products">All Products</a>
     <a href="#phone-accessories">Phone Accessories</a>
-    <a href="#home-living">Home and Living</a>
+    
+<a href="#home-appliances">Home Appliances</a>
+
 <a href="#kitchen-accessories">Kitchen Accessories</a>
 </nav>
     <main>
