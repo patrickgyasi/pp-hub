@@ -1218,7 +1218,7 @@ id="products">
          id="electronics"
          data-category="electronics">  <div class="category-image-wrap">
     <img
-      src="YOUR_ELECTRONICS_IMAGE_URL"
+      src="https://i.ibb.co/qFcVTyxq/file-000000003fac8243afdff3e3ee471398.png"
       alt="Electronics and technology accessories"
       class="category-image"
       loading="lazy"
@@ -1234,7 +1234,7 @@ id="products">
 </p>
 
 <a
-  href="YOUR_ELECTRONICS_AFFILIATE_LINK"
+  href="https://jmia.io/kiaAE10
   target="_blank"
   rel="noopener noreferrer sponsored"
   class="category-button"
