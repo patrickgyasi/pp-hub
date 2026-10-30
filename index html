@@ -115,9 +115,7 @@ text-align: center;
 .product {
     padding: 12px;
 }
-            .product-grid {
             
-            }
         }
 .clear-button {
   padding: 10px 16px;
