@@ -1464,7 +1464,9 @@ let activeCategory = "all";
 
 function filterCatalogue() {
     const searchText = searchBox.value.trim().toLowerCase();
-    let visibleCount = 0;
+
+    let visibleProducts = 0;
+    let visibleCategories = 0;
 
     productCards.forEach(function(card) {
         const categoryMatches =
@@ -1475,9 +1477,10 @@ function filterCatalogue() {
             card.textContent.toLowerCase().includes(searchText);
 
         const show = categoryMatches && textMatches;
+
         card.style.display = show ? "flex" : "none";
 
-        if (show) visibleCount++;
+        if (show) visibleProducts++;
     });
 
     categoryCards.forEach(function(card) {
@@ -1489,35 +1492,38 @@ function filterCatalogue() {
             card.textContent.toLowerCase().includes(searchText);
 
         const show = categoryMatches && textMatches;
+
         card.style.display = show ? "flex" : "none";
 
-        if (show) visibleCount++;
+        if (show) visibleCategories++;
     });
 
-    const productsVisible = Array.from(productCards).some(
-        card => card.style.display !== "none"
-    );
+    productGrid.style.display =
+        visibleProducts > 0 ? "" : "none";
 
-    const categoriesVisible = Array.from(categoryCards).some(
-        card => card.style.display !== "none"
-    );
+    categoryGrid.style.display =
+        visibleCategories > 0 ? "" : "none";
 
-    productGrid.style.display = productsVisible ? "" : "none";
-    categoryGrid.style.display = categoriesVisible ? "" : "none";
+    const totalResults =
+        visibleProducts + visibleCategories;
 
     noResults.style.display =
-        visibleCount === 0 ? "block" : "none";
+        totalResults === 0 ? "block" : "none";
 
-    resultCount.textContent =
-        visibleCount === 0
-            ? "No matching products or categories found"
-            : "Showing " + visibleCount +
-              (visibleCount === 1 ? " result" : " results");
+    if (totalResults === 0) {
+        resultCount.textContent = "No matching results found";
+    } else {
+        resultCount.textContent =
+            visibleProducts + " " +
+            (visibleProducts === 1 ? "product" : "products") +
+            " · " +
+            visibleCategories + " " +
+            (visibleCategories === 1 ? "category" : "categories");
+    }
 
     clearButton.style.display =
         searchText ? "inline-block" : "none";
 }
-
 // Navigation
 navLinks.forEach(function(link) {
     link.addEventListener("click", function(event) {
