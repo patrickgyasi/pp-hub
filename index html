@@ -1120,13 +1120,27 @@ padding:20px;
         <h2>Our Product Catalogue</h2>
 <div class="search-container">
   <span class="search-icon">🔍</span>
-  <input
+
+</div> 
+<input
     type="text"
     id="product-search"
     class="search-input"
-    placeholder="Search by product name or feature..."
-  >
-</div>
+    list="pp-hub-suggestions"
+    placeholder="Search products or categories..."
+    autocomplete="off"
+>
+
+<datalist id="pp-hub-suggestions">
+    <option value="USB-C Adapter">
+    <option value="Rabbit Phone Stand">
+    <option value="Kitchen Accessories">
+    <option value="Home Appliances">
+    <option value="Electronics">
+    <option value="Charging">
+    <option value="Data transfer">
+    <option value="Phone holder">
+</datalist>
 
 <button id="clear-search"class ="clear-button"type="button" style="display: none;">
   Clear Search
