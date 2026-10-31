@@ -114,8 +114,11 @@ text-align: center;
         @media (max-width: 600px) {
 .product {
     padding: 12px;
+
 }
-            
+      .product-grid{
+gab:12px;
+}
         }
 .clear-button {
   padding: 10px 16px;
