@@ -1003,7 +1003,88 @@ padding:20px;
     outline: 2px solid #176b45;
     outline-offset: 3px;
 }
+/* PP Hub - compact product card design */
 
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 12px;
+}
+
+.product {
+    display: flex;
+    flex-direction: column;
+    padding: 14px;
+    min-width: 0;
+}
+
+.product h2 {
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+}
+
+.product-img {
+    width: 100%;
+    height: 150px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 10px;
+}
+
+.product p {
+    margin: 8px 0;
+}
+
+.product-price {
+    font-weight: bold;
+}
+
+.product-details {
+    margin-top: 8px;
+    font-size: 0.9rem;
+}
+
+.product-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 9px 0;
+}
+
+.product-details h3 {
+    font-size: 0.95rem;
+    margin: 10px 0 5px;
+}
+
+.product-details ul,
+.product-details ol {
+    padding-left: 20px;
+    margin: 6px 0 10px;
+}
+
+.product-details li {
+    margin-bottom: 4px;
+}
+
+.product .buy-link {
+    display: block;
+    text-align: center;
+    margin-top: auto;
+}
+
+@media (max-width: 600px) {
+    .product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .product {
+        padding: 10px;
+    }
+
+    .product-img {
+        height: 110px;
+    }
+}
     </style>
 </head>
 
@@ -1069,7 +1150,9 @@ id="products">
                 <p>A handy accessory for compatible USB-C devices.</p>
 
                 <p class="product-price">Price: GH₵34</p>
-                
+  <details class="product-details">
+    <summary>More product details</summary>              
+
 <h3>Key  Features 
 </h3>
     <ul>
@@ -1088,16 +1171,18 @@ id="products">
     </ol>
 
 
-
+</details
     <a
-        class="buy-link"
+
+    
+class="buy-link"
         href="https://www.jumia.com.gh/generic-usb-to-usb-c-adapter-fast-charging-datatransfer-otg-adapter-300890977.html"
         target="_blank"
         rel="noopener noreferrer"
     >
         View on Jumia
     </a>
-</article>
+
 
             <article class="product" data-category="phone-accessories">
 <h2>Rabbit Phone Stand</h2>
@@ -1117,7 +1202,8 @@ id="products">
                 <p>A portable stand for your phone.</p>
 
                 <p class="product-price">Price: GH₵45</p>
-                
+                <details class="product-details">
+    <summary>More product details</summary>
 <h3>Key Features</h3>
 <ul>
     <li>Rabbit-shaped design</li>
@@ -1136,7 +1222,7 @@ id="products">
 </li>
 </ol>
 
-
+</details>
                 <a
                     class="buy-link"
                     href="https://www.jumia.com.gh/generic-rabbit-phone-stand-portable-desktop-phone-holder-300890803.html"
