@@ -119,7 +119,7 @@ text-align: center;
 
 }
       .product-grid{
-gab:12px;
+gap:12px;
 }
         }
 .clear-button {
