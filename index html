@@ -1149,113 +1149,9 @@ padding:20px;
   We are sorry!. No result match your search 🔍 
 </p>
 <p id="result-count">2 products found</p>
-        <div class="product-grid"
-id="products">
-
-            
-<article class="product" data-category="phone-accessories">
-<h2>USB-C Adapter</h2>
-
-                <a
-                    href="https://www.jumia.com.gh/generic-usb-to-usb-c-adapter-fast-charging-datatransfer-otg-adapter-300890977.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <img
-                        class="product-img"
-                        src="https://i.ibb.co/fdmhn4gv/PPHUB-USBC-ADP-001-main.png"
-
-                        alt="USB to USB-C adapter"
-                    >
-                </a>
-
-                <p>A handy accessory for compatible USB-C devices.</p>
-
-                <p class="product-price">Price: GH₵34</p>
-  <details class="product-details">
-    <summary>More product details</summary>              
-
-<h3>Key  Features 
-</h3>
-    <ul>
-        <li>USB to USB-C connection</li>
-        <li>Supports data transfer if compatible</li>
-        <li>Charging support depends on the adapter and connected devices</li>
-        <li>Compact and portable design</li>
-    </ul>
-
-    <h3>How to Use</h3>
-    <ol>
-        <li>Check that the adapter matches your device's port.</li>
-        <li>Connect the adapter to the compatible port.</li>
-        <li>Connect the other device or cable.</li>
-        <li>Check that the connection works as expected.</li>
-    </ol>
-
-
-</details>
-    <a
-
-    
-class="buy-link"
-        href="https://www.jumia.com.gh/generic-usb-to-usb-c-adapter-fast-charging-datatransfer-otg-adapter-300890977.html"
-        target="_blank"
-        rel="noopener noreferrer"
-    >
-        View on Jumia
-    </a>
-
-</article>
-            <article class="product" data-category="phone-accessories">
-<h2>Rabbit Phone Stand</h2>
-
-                <a
-                    href="https://www.jumia.com.gh/generic-rabbit-phone-stand-portable-desktop-phone-holder-300890803.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <img
-                        class="product-img"
-                        src="https://i.ibb.co/Nv08Z8n/PPHUB-RPS-001-main.png"
-                        alt="Rabbit-shaped phone stand"
-                    >
-                </a>
-
-                <p>A portable stand for your phone.</p>
-
-                <p class="product-price">Price: GH₵45</p>
-                <details class="product-details">
-    <summary>More product details</summary>
-<h3>Key Features</h3>
-<ul>
-    <li>Rabbit-shaped design</li>
-    <li>Portable desktop phone holder</li>
-    <li>Helps position a phone for hands-free viewing</li>
-</ul>
-
-<h3>How to Use</h3>
-<ol>
-    <li>Place the stand on a stable, flat surface.</li>
-    <li>Position your phone on the holder.</li>
-    <li>Adjust the phone for comfortable viewing, if supported.</li>
-    <li>Check that the phone is stable before letting go.
-</li>
-<li>NOTE:Please your phone vibration must off to precent shaking when device is mounted on the holder.
-</li>
-</ol>
-
-</details>
-                <a
-                    class="buy-link"
-                    href="https://www.jumia.com.gh/generic-rabbit-phone-stand-portable-desktop-phone-holder-300890803.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    View on Jumia
-                </a>
-            </article>
-
-        </div>
+       <div class="product-grid" id="products">
+    <!-- Product cards generated from central database -->
+</div>
 <div class="category-grid">
 
 <section class="category-card kitchen-category"
@@ -1463,8 +1359,138 @@ class="buy-link"
 
 
 <script>
-const searchBox = document.getElementById("product-search");
+/* =====================================
+   PP HUB CENTRAL PRODUCT DATABASE
+===================================== */
+
+const products = [
+    {
+        sku: "PPH-PH-001",
+        name: "USB-C Adapter",
+        category: "phone-accessories",
+        type: "own-inventory",
+        price: 34,
+        costPrice: null,
+        quantity: null,
+        image: "https://i.ibb.co/fdmhn4gv/PPHUB-USBC-ADP-001-main.png",
+        imageAlt: "USB to USB-C adapter",
+        description: "A handy accessory for compatible USB-C devices.",
+        jumiaUrl: "https://www.jumia.com.gh/generic-usb-to-usb-c-adapter-fast-charging-datatransfer-otg-adapter-300890977.html",
+        features: [
+            "USB to USB-C connection",
+            "Supports data transfer if compatible",
+            "Charging support depends on the adapter and connected devices",
+            "Compact and portable design"
+        ],
+        instructions: [
+            "Check that the adapter matches your device's port.",
+            "Connect the adapter to the compatible port.",
+            "Connect the other device or cable.",
+            "Check that the connection works as expected."
+        ]
+    },
+    {
+        sku: "PPH-PH-002",
+        name: "Rabbit Phone Stand",
+        category: "phone-accessories",
+        type: "own-inventory",
+        price: 45,
+        costPrice: null,
+        quantity: null,
+        image: "https://i.ibb.co/Nv08Z8n/PPHUB-RPS-001-main.png",
+        imageAlt: "Rabbit-shaped phone stand",
+        description: "A portable stand for your phone.",
+        jumiaUrl: "https://www.jumia.com.gh/generic-rabbit-phone-stand-portable-desktop-phone-holder-300890803.html",
+        features: [
+            "Rabbit-shaped design",
+            "Portable desktop phone holder",
+            "Helps position a phone for hands-free viewing"
+        ],
+        instructions: [
+            "Place the stand on a stable, flat surface.",
+            "Position your phone on the holder.",
+            "Adjust the phone for comfortable viewing, if supported.",
+            "Check that the phone is stable before letting go.",
+            "Turn off phone vibration to help prevent shaking."
+        ]
+    }
+];
+
+/* =====================================
+   AUTOMATIC PRODUCT CARD GENERATOR
+===================================== */
+
 const productGrid = document.getElementById("products");
+
+function generateProductCard(product) {
+    return `
+        <article class="product"
+                 data-category="${product.category}"
+                 data-sku="${product.sku}">
+
+            <h2>${product.name}</h2>
+
+            <a href="${product.jumiaUrl}"
+               target="_blank"
+               rel="noopener noreferrer">
+
+                <img
+                    class="product-img"
+                    src="${product.image}"
+                    alt="${product.imageAlt}"
+                    loading="lazy"
+                >
+            </a>
+
+            <p>${product.description}</p>
+
+            <p class="product-price">
+                Price: GH₵${product.price}
+            </p>
+
+            <details class="product-details">
+                <summary>More product details</summary>
+
+                <h3>Key Features</h3>
+
+                <ul>
+                    ${product.features.map(feature =>
+                        `<li>${feature}</li>`
+                    ).join("")}
+                </ul>
+
+                <h3>How to Use</h3>
+
+                <ol>
+                    ${product.instructions.map(instruction =>
+                        `<li>${instruction}</li>`
+                    ).join("")}
+                </ol>
+            </details>
+
+            <a
+                class="buy-link"
+                href="${product.jumiaUrl}"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                View on Jumia
+            </a>
+
+        </article>
+    `;
+}
+
+/* Generate product cards */
+productGrid.innerHTML = products
+    .map(generateProductCard)
+    .join("");
+
+/* =====================================
+   CATALOGUE ELEMENT REFERENCES
+===================================== */
+
+const searchBox = document.getElementById("product-search");
 const productCards = document.querySelectorAll("#products .product");
 const categoryGrid = document.querySelector(".category-grid");
 const categoryCards = document.querySelectorAll(".category-grid .category-card");
@@ -1472,7 +1498,6 @@ const noResults = document.getElementById("no-results");
 const resultCount = document.getElementById("result-count");
 const clearButton = document.getElementById("clear-search");
 const navLinks = document.querySelectorAll(".site-nav .nav-link");
-
 let activeCategory = "all";
 
 
