@@ -1,0 +1,14 @@
+
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pp-hub-api",
+  "main": "worker.js",
+  "compatibility_date": "2026-11-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pp-hub-db",
+      "database_id": "5920717a-b096-4db0-9bca-bc7d9fc612f2"
+    }
+  ]
+}
