@@ -1663,7 +1663,168 @@ affiliateLinks.forEach(function(link) {
         );
     });
 });
+/* =========================================
+   PP HUB INVENTORY DATABASE — VERSION 1
+========================================= */
 
+const PP_HUB_DB_NAME = "PPHubBusinessDB";
+const PP_HUB_DB_VERSION = 1;
+
+let ppHubDatabase = null;
+
+function openPPHubDatabase() {
+    return new Promise((resolve, reject) => {
+
+        const request = indexedDB.open(
+            PP_HUB_DB_NAME,
+            PP_HUB_DB_VERSION
+        );
+
+        request.onupgradeneeded = function(event) {
+            const db = event.target.result;
+
+            if (!db.objectStoreNames.contains("inventory")) {
+                const inventory = db.createObjectStore(
+                    "inventory",
+                    { keyPath: "sku" }
+                );
+
+                inventory.createIndex(
+                    "name",
+                    "name",
+                    { unique: false }
+                );
+            }
+
+            if (!db.objectStoreNames.contains("stockMovements")) {
+                db.createObjectStore(
+                    "stockMovements",
+                    {
+                        keyPath: "id",
+                        autoIncrement: true
+                    }
+                );
+            }
+
+            if (!db.objectStoreNames.contains("sales")) {
+                db.createObjectStore(
+                    "sales",
+                    {
+                        keyPath: "id",
+                        autoIncrement: true
+                    }
+                );
+            }
+
+            if (!db.objectStoreNames.contains("expenses")) {
+                db.createObjectStore(
+                    "expenses",
+                    {
+                        keyPath: "id",
+                        autoIncrement: true
+                    }
+                );
+            }
+        };
+
+        request.onsuccess = function(event) {
+            ppHubDatabase = event.target.result;
+            resolve(ppHubDatabase);
+        };
+
+        request.onerror = function(event) {
+            reject(event.target.error);
+        };
+    });
+}
+
+/* Register initial inventory records */
+
+async function initializePPHubInventory() {
+
+    const db = await openPPHubDatabase();
+
+    const transaction = db.transaction(
+        "inventory",
+        "readwrite"
+    );
+
+    const inventory = transaction.objectStore("inventory");
+
+    const initialRecords = [
+        {
+            sku: "PPH-PH-001",
+            name: "USB-C Adapter",
+            costPrice: null,
+            sellingPrice: 34,
+            quantity: null,
+            reorderLevel: 5,
+            status: "pending",
+            lastUpdated: null
+        },
+        {
+            sku: "PPH-PH-002",
+            name: "Rabbit Phone Stand",
+            costPrice: null,
+            sellingPrice: 45,
+            quantity: null,
+            reorderLevel: 5,
+            status: "pending",
+            lastUpdated: null
+        }
+    ];
+
+    initialRecords.forEach(record => {
+        const check = inventory.get(record.sku);
+
+        check.onsuccess = function() {
+            if (!check.result) {
+                inventory.add(record);
+            }
+        };
+    });
+
+    return new Promise((resolve, reject) => {
+        transaction.oncomplete = () => resolve(true);
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(transaction.error);
+    });
+}
+
+/* Retrieve inventory records */
+
+async function getPPHubInventory() {
+
+    const db = await openPPHubDatabase();
+
+    return new Promise((resolve, reject) => {
+
+        const transaction = db.transaction(
+            "inventory",
+            "readonly"
+        );
+
+        const request = transaction
+            .objectStore("inventory")
+            .getAll();
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+/* Initialize database */
+
+initializePPHubInventory()
+    .then(() => {
+        console.log("PP Hub inventory database initialized.");
+    })
+    .catch(error => {
+        console.error(
+            "PP Hub inventory initialization failed:",
+            error
+        );
+    });
 </script>
 
 </body>
