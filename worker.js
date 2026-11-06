@@ -154,7 +154,6 @@ export default {
 
       try {
         const testValue = crypto.randomUUID();
-
         const encrypted = await encryptText(testValue);
 
         const decrypted = await decryptText(
@@ -209,7 +208,6 @@ export default {
         `).run();
 
         const testValue = crypto.randomUUID();
-
         const encrypted = await encryptText(testValue);
 
         await env.DB.prepare(`
@@ -300,9 +298,7 @@ export default {
         `).run();
 
         const existing = await env.DB.prepare(`
-          SELECT id
-          FROM jumia_tokens
-          WHERE id = 1
+          SELECT id FROM jumia_tokens WHERE id = 1
         `).first();
 
         let initialized = false;
@@ -426,7 +422,6 @@ export default {
         `).run();
 
         const now = Math.floor(Date.now() / 1000);
-
         lockOwner = crypto.randomUUID();
 
         const first = await env.DB.prepare(`
@@ -463,10 +458,7 @@ export default {
           now
         ).run();
 
-        const secondBlocked =
-          second.meta.changes === 0;
-
-        if (!secondBlocked) {
+        if (second.meta.changes !== 0) {
           throw new Error("Second lock was not blocked");
         }
 
@@ -474,8 +466,8 @@ export default {
           success: true,
           database: "D1",
           firstLockAcquired: true,
-          simultaneousLockBlocked: true,
-          lockOwnershipVerified: true,
+          secondLockBlocked: true,
+          ownershipVerified: true,
           jumiaContacted: false
         });
       } catch (error) {
@@ -491,7 +483,7 @@ export default {
               WHERE id = 1 AND owner = ?
             `).bind(lockOwner).run();
           } catch (error) {
-            // Do not hide the original test result.
+            // Preserve the original test result.
           }
         }
       }
@@ -647,7 +639,6 @@ export default {
         return respond({ error: "Unauthorized" }, 401);
       }
 
-      // Live refresh remains disabled unless explicitly enabled.
       if (env.JUMIA_LIVE_REFRESH_ENABLED !== "true") {
         return respond({
           success: false,
@@ -672,7 +663,6 @@ export default {
       let requestSent = false;
 
       try {
-        // Acquire refresh control atomically.
         const acquired = await env.DB.prepare(`
           UPDATE jumia_refresh_control
           SET
@@ -732,7 +722,6 @@ export default {
         form.set("client_id", env.JUMIA_CLIENT_ID);
         form.set("refresh_token", refreshToken);
 
-        // First point at which Jumia is contacted.
         requestSent = true;
 
         const jumiaResponse = await fetch(
@@ -770,12 +759,9 @@ export default {
           !Number.isFinite(refreshExpiresIn) ||
           refreshExpiresIn <= 0
         ) {
-          throw new Error(
-            "Jumia token response validation failed"
-          );
+          throw new Error("Jumia token response validation failed");
         }
 
-        // Encrypt replacement tokens.
         const encryptedAccess = await encryptText(
           tokenData.access_token
         );
@@ -795,7 +781,6 @@ export default {
           completedAt.getTime() + refreshExpiresIn * 1000
         ).toISOString();
 
-        // Persist tokens and release control in one D1 batch.
         let persisted = false;
 
         for (let attempt = 1; attempt <= 3; attempt++) {
@@ -851,9 +836,7 @@ export default {
         }
 
         if (!persisted) {
-          throw new Error(
-            "Encrypted token persistence was not confirmed"
-          );
+          throw new Error("Token persistence was not confirmed");
         }
 
         return respond({
@@ -869,7 +852,6 @@ export default {
         });
 
       } catch (error) {
-        // Block further refreshes after an uncertain outcome.
         try {
           await env.DB.prepare(`
             UPDATE jumia_refresh_control
@@ -884,7 +866,7 @@ export default {
             operationId
           ).run();
         } catch (recoveryError) {
-          // An existing in_progress state also blocks new refreshes.
+          // Existing in_progress state blocks another refresh.
         }
 
         return respond({
@@ -898,7 +880,214 @@ export default {
       }
     }
 
-    // 11. Unknown routes
+    // 11. Test Jumia refresh concurrency and dummy-token persistence
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/jumia/test-refresh-safety"
+    ) {
+      if (!requireAdmin()) {
+        return respond({ error: "Unauthorized" }, 401);
+      }
+
+      if (!env.DB) {
+        return respond({
+          success: false,
+          error: "Database binding missing"
+        }, 500);
+      }
+
+      const ownerA = crypto.randomUUID();
+      const ownerB = crypto.randomUUID();
+      const testId = crypto.randomUUID();
+
+      let acquiredOwner = null;
+      let testRecordCreated = false;
+
+      try {
+        const current = await env.DB.prepare(`
+          SELECT state
+          FROM jumia_refresh_control
+          WHERE id = 1
+        `).first();
+
+        if (!current || current.state !== "ready") {
+          return respond({
+            success: false,
+            error: "Refresh control must be ready before testing",
+            currentState: current?.state || "missing",
+            jumiaContacted: false
+          }, 409);
+        }
+
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS jumia_token_persistence_test (
+            id TEXT PRIMARY KEY,
+            encrypted_access_token TEXT NOT NULL,
+            access_iv TEXT NOT NULL,
+            encrypted_refresh_token TEXT NOT NULL,
+            refresh_iv TEXT NOT NULL,
+            created_at TEXT NOT NULL
+          )
+        `).run();
+
+        const acquire = owner =>
+          env.DB.prepare(`
+            UPDATE jumia_refresh_control
+            SET
+              state = 'in_progress',
+              operation_id = ?,
+              started_at = ?,
+              updated_at = ?
+            WHERE id = 1 AND state = 'ready'
+          `).bind(
+            owner,
+            new Date().toISOString(),
+            new Date().toISOString()
+          ).run();
+
+        const attempts = await Promise.all([
+          acquire(ownerA),
+          acquire(ownerB)
+        ]);
+
+        const changesA = attempts[0].meta.changes;
+        const changesB = attempts[1].meta.changes;
+
+        if (
+          changesA + changesB !== 1 ||
+          ![0, 1].includes(changesA) ||
+          ![0, 1].includes(changesB)
+        ) {
+          throw new Error("Concurrent control test failed");
+        }
+
+        acquiredOwner = changesA === 1 ? ownerA : ownerB;
+
+        const dummyAccess =
+          `TEST_ACCESS_${crypto.randomUUID()}`;
+
+        const dummyRefresh =
+          `TEST_REFRESH_${crypto.randomUUID()}`;
+
+        const encryptedAccess = await encryptText(dummyAccess);
+        const encryptedRefresh = await encryptText(dummyRefresh);
+
+        await env.DB.prepare(`
+          INSERT INTO jumia_token_persistence_test (
+            id,
+            encrypted_access_token,
+            access_iv,
+            encrypted_refresh_token,
+            refresh_iv,
+            created_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(
+          testId,
+          encryptedAccess.encrypted_token,
+          encryptedAccess.iv,
+          encryptedRefresh.encrypted_token,
+          encryptedRefresh.iv,
+          new Date().toISOString()
+        ).run();
+
+        testRecordCreated = true;
+
+        const saved = await env.DB.prepare(`
+          SELECT
+            encrypted_access_token,
+            access_iv,
+            encrypted_refresh_token,
+            refresh_iv
+          FROM jumia_token_persistence_test
+          WHERE id = ?
+        `).bind(testId).first();
+
+        if (!saved) {
+          throw new Error("Dummy token record not found");
+        }
+
+        const recoveredAccess = await decryptText(
+          saved.encrypted_access_token,
+          saved.access_iv
+        );
+
+        const recoveredRefresh = await decryptText(
+          saved.encrypted_refresh_token,
+          saved.refresh_iv
+        );
+
+        const accessVerified =
+          recoveredAccess === dummyAccess;
+
+        const refreshVerified =
+          recoveredRefresh === dummyRefresh;
+
+        if (!accessVerified || !refreshVerified) {
+          throw new Error("Dummy token recovery failed");
+        }
+
+        return respond({
+          success: true,
+          concurrencyTest: {
+            firstRequestAcquired: true,
+            secondRequestBlocked: true,
+            onlyOneOwnerAcquired: true
+          },
+          persistenceTest: {
+            dummyAccessTokenStored: true,
+            dummyRefreshTokenStored: true,
+            accessTokenDecrypted: true,
+            refreshTokenDecrypted: true,
+            valuesMatched: true
+          },
+          realTokensChanged: false,
+          jumiaContacted: false
+        });
+
+      } catch (error) {
+        return respond({
+          success: false,
+          error: "Refresh safety test failed",
+          jumiaContacted: false
+        }, 500);
+
+      } finally {
+        if (testRecordCreated) {
+          try {
+            await env.DB.prepare(`
+              DELETE FROM jumia_token_persistence_test
+              WHERE id = ?
+            `).bind(testId).run();
+          } catch (error) {
+            // Test record cleanup can be retried separately.
+          }
+        }
+
+        if (acquiredOwner) {
+          try {
+            await env.DB.prepare(`
+              UPDATE jumia_refresh_control
+              SET
+                state = 'ready',
+                operation_id = NULL,
+                started_at = NULL,
+                updated_at = ?
+              WHERE id = 1
+                AND state = 'in_progress'
+                AND operation_id = ?
+            `).bind(
+              new Date().toISOString(),
+              acquiredOwner
+            ).run();
+          } catch (error) {
+            // Do not overwrite another operation's state.
+          }
+        }
+      }
+    }
+
+    // 12. Unknown routes
     return respond({
       error: "Route not found"
     }, 404);
