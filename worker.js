@@ -14,6 +14,7 @@ export default {
 
     const requireAdmin = () => {
       const authorization = request.headers.get("Authorization");
+
       return Boolean(
         env.PPHUB_API_KEY &&
         authorization === `Bearer ${env.PPHUB_API_KEY}`
@@ -26,6 +27,7 @@ export default {
       }
 
       const binary = atob(env.PPHUB_TOKEN_ENCRYPTION_KEY);
+
       const raw = Uint8Array.from(
         binary,
         c => c.charCodeAt(0)
@@ -46,6 +48,7 @@ export default {
 
     async function encryptText(text) {
       const key = await getEncryptionKey();
+
       const iv = crypto.getRandomValues(
         new Uint8Array(12)
       );
@@ -151,6 +154,7 @@ export default {
 
       try {
         const testValue = crypto.randomUUID();
+
         const encrypted = await encryptText(testValue);
 
         const decrypted = await decryptText(
@@ -206,6 +210,7 @@ export default {
         `).run();
 
         const testValue = crypto.randomUUID();
+
         const encrypted = await encryptText(testValue);
 
         await env.DB.prepare(`
@@ -257,8 +262,7 @@ export default {
       } catch (error) {
         return respond({
           success: false,
-          error: "Token storage test failed",
-          reason: error.message
+          error: "Token storage test failed"
         }, 500);
       }
     }
@@ -274,7 +278,11 @@ export default {
 
       if (!env.DB || !env.JUMIA_REFRESH_TOKEN) {
         return respond({
-          error: "Database binding or Jumia refresh-token secret missing"
+          error: "Production configuration incomplete",
+          databaseBindingPresent: Boolean(env.DB),
+          refreshTokenSecretPresent: Boolean(
+            env.JUMIA_REFRESH_TOKEN
+          )
         }, 500);
       }
 
@@ -338,7 +346,61 @@ export default {
       }
     }
 
-    // 6. Unknown routes
+    // 6. Verify encrypted Jumia token recovery
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/verify-token-storage"
+    ) {
+      if (!requireAdmin()) {
+        return respond({ error: "Unauthorized" }, 401);
+      }
+
+      if (!env.DB || !env.JUMIA_REFRESH_TOKEN) {
+        return respond({
+          error: "Required configuration missing"
+        }, 500);
+      }
+
+      try {
+        const saved = await env.DB.prepare(`
+          SELECT encrypted_refresh_token, refresh_iv
+          FROM jumia_tokens
+          WHERE id = 1
+        `).first();
+
+        if (!saved) {
+          return respond({
+            success: false,
+            error: "Stored token record not found"
+          }, 404);
+        }
+
+        const recovered = await decryptText(
+          saved.encrypted_refresh_token,
+          saved.refresh_iv
+        );
+
+        const matchesOriginal =
+          recovered === env.JUMIA_REFRESH_TOKEN;
+
+        return respond({
+          success: matchesOriginal,
+          databaseRecordFound: true,
+          decryptionSuccessful: true,
+          matchesOriginalSecret: matchesOriginal,
+          tokenValueExposed: false,
+          jumiaContacted: false
+        }, matchesOriginal ? 200 : 409);
+
+      } catch (error) {
+        return respond({
+          success: false,
+          error: "Token recovery verification failed"
+        }, 500);
+      }
+    }
+
+    // 7. Unknown routes
     return respond({
       error: "Route not found"
     }, 404);
