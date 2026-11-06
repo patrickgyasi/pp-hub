@@ -394,7 +394,7 @@ export default {
       }
     }
 
-    // 7. Test atomic refresh-lock protection
+    // 7. Test refresh-lock protection
     if (
       request.method === "POST" &&
       url.pathname === "/admin/test-refresh-lock"
@@ -564,7 +564,72 @@ export default {
       }
     }
 
-    // 9. Unknown routes
+    // 9. Prepare fail-safe Jumia refresh control
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/jumia/prepare-refresh-control"
+    ) {
+      if (!requireAdmin()) {
+        return respond({ error: "Unauthorized" }, 401);
+      }
+
+      if (!env.DB) {
+        return respond({
+          success: false,
+          error: "Database binding missing"
+        }, 500);
+      }
+
+      try {
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS jumia_refresh_control (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            state TEXT NOT NULL CHECK (
+              state IN ('ready', 'in_progress', 'uncertain')
+            ),
+            operation_id TEXT,
+            started_at TEXT,
+            updated_at TEXT NOT NULL
+          )
+        `).run();
+
+        await env.DB.prepare(`
+          INSERT INTO jumia_refresh_control (
+            id, state, updated_at
+          )
+          VALUES (1, 'ready', ?)
+          ON CONFLICT(id) DO NOTHING
+        `).bind(new Date().toISOString()).run();
+
+        const control = await env.DB.prepare(`
+          SELECT state, operation_id, started_at, updated_at
+          FROM jumia_refresh_control
+          WHERE id = 1
+        `).first();
+
+        if (!control) {
+          throw new Error("Refresh control record missing");
+        }
+
+        return respond({
+          success: true,
+          database: "D1",
+          refreshControlTableReady: true,
+          state: control.state,
+          operationInProgress: control.state === "in_progress",
+          manualRecoveryRequired: control.state === "uncertain",
+          jumiaContacted: false
+        });
+      } catch (error) {
+        return respond({
+          success: false,
+          error: "Refresh control preparation failed",
+          jumiaContacted: false
+        }, 500);
+      }
+    }
+
+    // 10. Unknown routes
     return respond({
       error: "Route not found"
     }, 404);
