@@ -473,13 +473,11 @@ export default {
           lockOwnershipVerified: true,
           jumiaContacted: false
         });
-
       } catch (error) {
         return respond({
           success: false,
           error: "Refresh-lock test failed"
         }, 500);
-
       } finally {
         if (lockAcquired && lockOwner) {
           await env.DB.prepare(`
@@ -490,7 +488,83 @@ export default {
       }
     }
 
-    // 8. Unknown routes
+    // 8. Jumia Self Authorization preflight
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/jumia/refresh-preflight"
+    ) {
+      if (!requireAdmin()) {
+        return respond({ error: "Unauthorized" }, 401);
+      }
+
+      if (!env.DB || !env.JUMIA_CLIENT_ID) {
+        return respond({
+          success: false,
+          databaseBindingPresent: Boolean(env.DB),
+          clientIdPresent: Boolean(env.JUMIA_CLIENT_ID),
+          jumiaContacted: false
+        }, 500);
+      }
+
+      try {
+        const saved = await env.DB.prepare(`
+          SELECT encrypted_refresh_token, refresh_iv
+          FROM jumia_tokens
+          WHERE id = 1
+        `).first();
+
+        if (!saved) {
+          return respond({
+            success: false,
+            error: "Encrypted refresh token not found",
+            jumiaContacted: false
+          }, 404);
+        }
+
+        const refreshToken = await decryptText(
+          saved.encrypted_refresh_token,
+          saved.refresh_iv
+        );
+
+        if (!refreshToken) {
+          throw new Error("Refresh token is empty");
+        }
+
+        const form = new URLSearchParams();
+
+        form.set("grant_type", "refresh_token");
+        form.set("client_id", env.JUMIA_CLIENT_ID);
+        form.set("refresh_token", refreshToken);
+
+        const fieldsValid =
+          form.has("grant_type") &&
+          form.has("client_id") &&
+          form.has("refresh_token");
+
+        return respond({
+          success: fieldsValid,
+          authentication: "Jumia Self Authorization",
+          endpoint: "https://vendor-api.jumia.com/token",
+          method: "POST",
+          contentType: "application/x-www-form-urlencoded",
+          clientIdPresent: true,
+          encryptedRefreshTokenFound: true,
+          refreshTokenDecrypted: true,
+          requestFieldsValid: fieldsValid,
+          clientSecretRequired: false,
+          liveRequestSent: false,
+          jumiaContacted: false
+        });
+      } catch (error) {
+        return respond({
+          success: false,
+          error: "Jumia preflight failed",
+          jumiaContacted: false
+        }, 500);
+      }
+    }
+
+    // 9. Unknown routes
     return respond({
       error: "Route not found"
     }, 404);
