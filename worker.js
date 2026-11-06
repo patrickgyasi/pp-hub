@@ -76,6 +76,7 @@ export default {
       return new TextDecoder().decode(plaintext);
     }
 
+    // 1. Public health check
     if (request.method === "GET" && url.pathname === "/health") {
       return respond({
         service: "PP Hub API",
@@ -83,6 +84,7 @@ export default {
       });
     }
 
+    // 2. Initialize database table
     if (
       request.method === "POST" &&
       url.pathname === "/admin/init-db"
@@ -117,6 +119,7 @@ export default {
       }
     }
 
+    // 3. Test AES-256-GCM encryption
     if (
       request.method === "POST" &&
       url.pathname === "/admin/test-encryption"
@@ -156,6 +159,89 @@ export default {
       }
     }
 
+    // 4. Test encrypted storage in D1
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/test-token-storage"
+    ) {
+      if (!requireAdmin()) {
+        return respond({ error: "Unauthorized" }, 401);
+      }
+
+      if (!env.DB) {
+        return respond({ error: "Database binding missing" }, 500);
+      }
+
+      try {
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS encryption_test (
+            id INTEGER PRIMARY KEY,
+            encrypted_token TEXT NOT NULL,
+            iv TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        `).run();
+
+        const testValue = crypto.randomUUID();
+        const encrypted = await encryptText(testValue);
+
+        await env.DB.prepare(`
+          INSERT INTO encryption_test
+          (id, encrypted_token, iv, updated_at)
+          VALUES (1, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            encrypted_token = excluded.encrypted_token,
+            iv = excluded.iv,
+            updated_at = excluded.updated_at
+        `).bind(
+          encrypted.encrypted_token,
+          encrypted.iv,
+          new Date().toISOString()
+        ).run();
+
+        const saved = await env.DB.prepare(`
+          SELECT encrypted_token, iv
+          FROM encryption_test
+          WHERE id = 1
+        `).first();
+
+        if (!saved) {
+          throw new Error("Saved record not found");
+        }
+
+        const decrypted = await decryptText(
+          saved.encrypted_token,
+          saved.iv
+        );
+
+        if (decrypted !== testValue) {
+          throw new Error("Database verification failed");
+        }
+
+        await env.DB.prepare(`
+          DELETE FROM encryption_test WHERE id = 1
+        `).run();
+
+        return respond({
+          success: true,
+          database: "D1",
+          encryption: "AES-256-GCM",
+          recordSaved: true,
+          recordRetrieved: true,
+          roundTripVerified: true,
+          testRecordDeleted: true
+        });
+
+      } catch (error) {
+        return respond({
+          success: false,
+          error: "Token storage test failed",
+          reason: error.message
+        }, 500);
+      }
+    }
+
+    // 5. Unknown routes
     return respond({ error: "Route not found" }, 404);
   }
 };
