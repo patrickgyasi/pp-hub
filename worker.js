@@ -26,7 +26,10 @@ export default {
       }
 
       const binary = atob(env.PPHUB_TOKEN_ENCRYPTION_KEY);
-      const raw = Uint8Array.from(binary, c => c.charCodeAt(0));
+      const raw = Uint8Array.from(
+        binary,
+        c => c.charCodeAt(0)
+      );
 
       if (raw.length !== 32) {
         throw new Error("Encryption key must be 32 bytes");
@@ -43,7 +46,10 @@ export default {
 
     async function encryptText(text) {
       const key = await getEncryptionKey();
-      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const iv = crypto.getRandomValues(
+        new Uint8Array(12)
+      );
+
       const encoded = new TextEncoder().encode(text);
 
       const ciphertext = await crypto.subtle.encrypt(
@@ -53,7 +59,11 @@ export default {
       );
 
       const toBase64 = bytes =>
-        btoa(String.fromCharCode(...new Uint8Array(bytes)));
+        btoa(
+          String.fromCharCode(
+            ...new Uint8Array(bytes)
+          )
+        );
 
       return {
         encrypted_token: toBase64(ciphertext),
@@ -65,10 +75,16 @@ export default {
       const key = await getEncryptionKey();
 
       const fromBase64 = value =>
-        Uint8Array.from(atob(value), c => c.charCodeAt(0));
+        Uint8Array.from(
+          atob(value),
+          c => c.charCodeAt(0)
+        );
 
       const plaintext = await crypto.subtle.decrypt(
-        { name: "AES-GCM", iv: fromBase64(ivText) },
+        {
+          name: "AES-GCM",
+          iv: fromBase64(ivText)
+        },
         key,
         fromBase64(encrypted)
       );
@@ -77,14 +93,17 @@ export default {
     }
 
     // 1. Public health check
-    if (request.method === "GET" && url.pathname === "/health") {
+    if (
+      request.method === "GET" &&
+      url.pathname === "/health"
+    ) {
       return respond({
         service: "PP Hub API",
         status: "online"
       });
     }
 
-    // 2. Initialize database table
+    // 2. Initialize original token storage table
     if (
       request.method === "POST" &&
       url.pathname === "/admin/init-db"
@@ -94,7 +113,9 @@ export default {
       }
 
       if (!env.DB) {
-        return respond({ error: "Database binding missing" }, 500);
+        return respond({
+          error: "Database binding missing"
+        }, 500);
       }
 
       try {
@@ -169,7 +190,9 @@ export default {
       }
 
       if (!env.DB) {
-        return respond({ error: "Database binding missing" }, 500);
+        return respond({
+          error: "Database binding missing"
+        }, 500);
       }
 
       try {
@@ -231,7 +254,6 @@ export default {
           roundTripVerified: true,
           testRecordDeleted: true
         });
-
       } catch (error) {
         return respond({
           success: false,
@@ -271,7 +293,9 @@ export default {
         `).run();
 
         const existing = await env.DB.prepare(`
-          SELECT id FROM jumia_tokens WHERE id = 1
+          SELECT id
+          FROM jumia_tokens
+          WHERE id = 1
         `).first();
 
         let initialized = false;
@@ -287,7 +311,8 @@ export default {
               encrypted_refresh_token,
               refresh_iv,
               updated_at
-            ) VALUES (1, ?, ?, ?)
+            )
+            VALUES (1, ?, ?, ?)
           `).bind(
             encrypted.encrypted_token,
             encrypted.iv,
@@ -305,7 +330,6 @@ export default {
           existingTokenPreserved: !initialized,
           jumiaContacted: false
         });
-
       } catch (error) {
         return respond({
           success: false,
@@ -315,8 +339,8 @@ export default {
     }
 
     // 6. Unknown routes
-
-    // 5. Unknown routes
-    return respond({ error: "Route not found" }, 404);
+    return respond({
+      error: "Route not found"
+    }, 404);
   }
 };
