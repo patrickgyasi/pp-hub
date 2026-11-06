@@ -27,7 +27,6 @@ export default {
       }
 
       const binary = atob(env.PPHUB_TOKEN_ENCRYPTION_KEY);
-
       const raw = Uint8Array.from(
         binary,
         c => c.charCodeAt(0)
@@ -48,7 +47,6 @@ export default {
 
     async function encryptText(text) {
       const key = await getEncryptionKey();
-
       const iv = crypto.getRandomValues(
         new Uint8Array(12)
       );
@@ -154,7 +152,6 @@ export default {
 
       try {
         const testValue = crypto.randomUUID();
-
         const encrypted = await encryptText(testValue);
 
         const decrypted = await decryptText(
@@ -178,8 +175,7 @@ export default {
       } catch (error) {
         return respond({
           success: false,
-          error: "Encryption test failed",
-          reason: error.message
+          error: "Encryption test failed"
         }, 500);
       }
     }
@@ -210,7 +206,6 @@ export default {
         `).run();
 
         const testValue = crypto.randomUUID();
-
         const encrypted = await encryptText(testValue);
 
         await env.DB.prepare(`
@@ -391,7 +386,6 @@ export default {
           tokenValueExposed: false,
           jumiaContacted: false
         }, matchesOriginal ? 200 : 409);
-
       } catch (error) {
         return respond({
           success: false,
@@ -400,7 +394,103 @@ export default {
       }
     }
 
-    // 7. Unknown routes
+    // 7. Test atomic refresh-lock protection
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/test-refresh-lock"
+    ) {
+      if (!requireAdmin()) {
+        return respond({ error: "Unauthorized" }, 401);
+      }
+
+      if (!env.DB) {
+        return respond({
+          error: "Database binding missing"
+        }, 500);
+      }
+
+      let lockOwner = null;
+      let lockAcquired = false;
+
+      try {
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS refresh_lock (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            owner TEXT NOT NULL,
+            expires_at INTEGER NOT NULL
+          )
+        `).run();
+
+        const now = Math.floor(Date.now() / 1000);
+        lockOwner = crypto.randomUUID();
+
+        const first = await env.DB.prepare(`
+          INSERT INTO refresh_lock (id, owner, expires_at)
+          VALUES (1, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            owner = excluded.owner,
+            expires_at = excluded.expires_at
+          WHERE refresh_lock.expires_at <= ?
+        `).bind(
+          lockOwner,
+          now + 90,
+          now
+        ).run();
+
+        if (first.meta.changes !== 1) {
+          throw new Error("First lock acquisition failed");
+        }
+
+        lockAcquired = true;
+
+        const secondOwner = crypto.randomUUID();
+
+        const second = await env.DB.prepare(`
+          INSERT INTO refresh_lock (id, owner, expires_at)
+          VALUES (1, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            owner = excluded.owner,
+            expires_at = excluded.expires_at
+          WHERE refresh_lock.expires_at <= ?
+        `).bind(
+          secondOwner,
+          now + 90,
+          now
+        ).run();
+
+        const secondBlocked =
+          second.meta.changes === 0;
+
+        if (!secondBlocked) {
+          throw new Error("Second lock was not blocked");
+        }
+
+        return respond({
+          success: true,
+          database: "D1",
+          firstLockAcquired: true,
+          simultaneousLockBlocked: true,
+          lockOwnershipVerified: true,
+          jumiaContacted: false
+        });
+
+      } catch (error) {
+        return respond({
+          success: false,
+          error: "Refresh-lock test failed"
+        }, 500);
+
+      } finally {
+        if (lockAcquired && lockOwner) {
+          await env.DB.prepare(`
+            DELETE FROM refresh_lock
+            WHERE id = 1 AND owner = ?
+          `).bind(lockOwner).run();
+        }
+      }
+    }
+
+    // 8. Unknown routes
     return respond({
       error: "Route not found"
     }, 404);
