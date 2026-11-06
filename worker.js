@@ -27,6 +27,7 @@ export default {
       }
 
       const binary = atob(env.PPHUB_TOKEN_ENCRYPTION_KEY);
+
       const raw = Uint8Array.from(
         binary,
         c => c.charCodeAt(0)
@@ -47,6 +48,7 @@ export default {
 
     async function encryptText(text) {
       const key = await getEncryptionKey();
+
       const iv = crypto.getRandomValues(
         new Uint8Array(12)
       );
@@ -152,6 +154,7 @@ export default {
 
       try {
         const testValue = crypto.randomUUID();
+
         const encrypted = await encryptText(testValue);
 
         const decrypted = await decryptText(
@@ -206,6 +209,7 @@ export default {
         `).run();
 
         const testValue = crypto.randomUUID();
+
         const encrypted = await encryptText(testValue);
 
         await env.DB.prepare(`
@@ -422,6 +426,7 @@ export default {
         `).run();
 
         const now = Math.floor(Date.now() / 1000);
+
         lockOwner = crypto.randomUUID();
 
         const first = await env.DB.prepare(`
@@ -480,10 +485,14 @@ export default {
         }, 500);
       } finally {
         if (lockAcquired && lockOwner) {
-          await env.DB.prepare(`
-            DELETE FROM refresh_lock
-            WHERE id = 1 AND owner = ?
-          `).bind(lockOwner).run();
+          try {
+            await env.DB.prepare(`
+              DELETE FROM refresh_lock
+              WHERE id = 1 AND owner = ?
+            `).bind(lockOwner).run();
+          } catch (error) {
+            // Do not hide the original test result.
+          }
         }
       }
     }
@@ -629,7 +638,267 @@ export default {
       }
     }
 
-    // 10. Unknown routes
+    // 10. Protected Jumia live token refresh
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/jumia/refresh"
+    ) {
+      if (!requireAdmin()) {
+        return respond({ error: "Unauthorized" }, 401);
+      }
+
+      // Live refresh remains disabled unless explicitly enabled.
+      if (env.JUMIA_LIVE_REFRESH_ENABLED !== "true") {
+        return respond({
+          success: false,
+          error: "Live Jumia refresh is disabled",
+          liveRequestSent: false,
+          jumiaContacted: false
+        }, 423);
+      }
+
+      if (!env.DB || !env.JUMIA_CLIENT_ID) {
+        return respond({
+          success: false,
+          error: "Required configuration missing",
+          liveRequestSent: false,
+          jumiaContacted: false
+        }, 500);
+      }
+
+      const operationId = crypto.randomUUID();
+      const startedAt = new Date().toISOString();
+
+      let requestSent = false;
+
+      try {
+        // Acquire refresh control atomically.
+        const acquired = await env.DB.prepare(`
+          UPDATE jumia_refresh_control
+          SET
+            state = 'in_progress',
+            operation_id = ?,
+            started_at = ?,
+            updated_at = ?
+          WHERE id = 1
+            AND state = 'ready'
+            AND EXISTS (
+              SELECT 1 FROM jumia_tokens WHERE id = 1
+            )
+        `).bind(
+          operationId,
+          startedAt,
+          startedAt
+        ).run();
+
+        if (acquired.meta.changes !== 1) {
+          const current = await env.DB.prepare(`
+            SELECT state
+            FROM jumia_refresh_control
+            WHERE id = 1
+          `).first();
+
+          return respond({
+            success: false,
+            error: "Refresh control is not ready",
+            currentState: current?.state || "missing",
+            liveRequestSent: false,
+            jumiaContacted: false
+          }, 409);
+        }
+
+        const saved = await env.DB.prepare(`
+          SELECT encrypted_refresh_token, refresh_iv
+          FROM jumia_tokens
+          WHERE id = 1
+        `).first();
+
+        if (!saved) {
+          throw new Error("Stored refresh token not found");
+        }
+
+        const refreshToken = await decryptText(
+          saved.encrypted_refresh_token,
+          saved.refresh_iv
+        );
+
+        if (!refreshToken) {
+          throw new Error("Stored refresh token is empty");
+        }
+
+        const form = new URLSearchParams();
+
+        form.set("grant_type", "refresh_token");
+        form.set("client_id", env.JUMIA_CLIENT_ID);
+        form.set("refresh_token", refreshToken);
+
+        // First point at which Jumia is contacted.
+        requestSent = true;
+
+        const jumiaResponse = await fetch(
+          "https://vendor-api.jumia.com/token",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "Accept": "application/json"
+            },
+            body: form.toString()
+          }
+        );
+
+        if (!jumiaResponse.ok) {
+          throw new Error(
+            `Jumia returned HTTP ${jumiaResponse.status}`
+          );
+        }
+
+        const tokenData = await jumiaResponse.json();
+
+        const expiresIn = Number(tokenData.expires_in);
+        const refreshExpiresIn = Number(
+          tokenData.refresh_expires_in
+        );
+
+        if (
+          typeof tokenData.access_token !== "string" ||
+          !tokenData.access_token ||
+          typeof tokenData.refresh_token !== "string" ||
+          !tokenData.refresh_token ||
+          !Number.isFinite(expiresIn) ||
+          expiresIn <= 0 ||
+          !Number.isFinite(refreshExpiresIn) ||
+          refreshExpiresIn <= 0
+        ) {
+          throw new Error(
+            "Jumia token response validation failed"
+          );
+        }
+
+        // Encrypt replacement tokens.
+        const encryptedAccess = await encryptText(
+          tokenData.access_token
+        );
+
+        const encryptedRefresh = await encryptText(
+          tokenData.refresh_token
+        );
+
+        const completedAt = new Date();
+        const completedAtText = completedAt.toISOString();
+
+        const accessExpiresAt = new Date(
+          completedAt.getTime() + expiresIn * 1000
+        ).toISOString();
+
+        const refreshExpiresAt = new Date(
+          completedAt.getTime() + refreshExpiresIn * 1000
+        ).toISOString();
+
+        // Persist tokens and release control in one D1 batch.
+        let persisted = false;
+
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            const results = await env.DB.batch([
+              env.DB.prepare(`
+                UPDATE jumia_tokens
+                SET
+                  encrypted_refresh_token = ?,
+                  refresh_iv = ?,
+                  encrypted_access_token = ?,
+                  access_iv = ?,
+                  access_expires_at = ?,
+                  refresh_expires_at = ?,
+                  updated_at = ?
+                WHERE id = 1
+              `).bind(
+                encryptedRefresh.encrypted_token,
+                encryptedRefresh.iv,
+                encryptedAccess.encrypted_token,
+                encryptedAccess.iv,
+                accessExpiresAt,
+                refreshExpiresAt,
+                completedAtText
+              ),
+
+              env.DB.prepare(`
+                UPDATE jumia_refresh_control
+                SET
+                  state = 'ready',
+                  operation_id = NULL,
+                  started_at = NULL,
+                  updated_at = ?
+                WHERE id = 1
+                  AND state = 'in_progress'
+                  AND operation_id = ?
+              `).bind(
+                completedAtText,
+                operationId
+              )
+            ]);
+
+            if (
+              results[0].meta.changes === 1 &&
+              results[1].meta.changes === 1
+            ) {
+              persisted = true;
+              break;
+            }
+          } catch (error) {
+            // Retry while replacement tokens remain in memory.
+          }
+        }
+
+        if (!persisted) {
+          throw new Error(
+            "Encrypted token persistence was not confirmed"
+          );
+        }
+
+        return respond({
+          success: true,
+          accessTokenStored: true,
+          refreshTokenRotatedAndStored: true,
+          accessTokenExpiresAt: accessExpiresAt,
+          refreshTokenExpiresAt: refreshExpiresAt,
+          refreshControlState: "ready",
+          tokenValuesExposed: false,
+          liveRequestSent: true,
+          jumiaContacted: true
+        });
+
+      } catch (error) {
+        // Block further refreshes after an uncertain outcome.
+        try {
+          await env.DB.prepare(`
+            UPDATE jumia_refresh_control
+            SET
+              state = 'uncertain',
+              updated_at = ?
+            WHERE id = 1
+              AND state = 'in_progress'
+              AND operation_id = ?
+          `).bind(
+            new Date().toISOString(),
+            operationId
+          ).run();
+        } catch (recoveryError) {
+          // An existing in_progress state also blocks new refreshes.
+        }
+
+        return respond({
+          success: false,
+          error: "Jumia refresh could not be safely completed",
+          refreshControlState: "uncertain_or_in_progress",
+          liveRequestSent: requestSent,
+          jumiaContacted: requestSent,
+          manualRecoveryRequired: requestSent
+        }, 502);
+      }
+    }
+
+    // 11. Unknown routes
     return respond({
       error: "Route not found"
     }, 404);
