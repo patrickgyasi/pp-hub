@@ -1087,7 +1087,120 @@ export default {
       }
     }
 
-    // 12. Unknown routes
+    // 12. Manual Jumia refresh-token recovery
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/jumia/recover-refresh-token"
+    ) {
+      if (!requireAdmin()) {
+        return respond({ error: "Unauthorized" }, 401);
+      }
+
+      if (!env.DB) {
+        return respond({
+          success: false,
+          error: "Database binding missing"
+        }, 500);
+      }
+
+      try {
+        const body = await request.json();
+
+        if (
+          body.confirm !==
+            "I_HAVE_A_VALID_REPLACEMENT_REFRESH_TOKEN" ||
+          typeof body.refresh_token !== "string" ||
+          !body.refresh_token.trim()
+        ) {
+          return respond({
+            success: false,
+            error: "Valid replacement token and confirmation required",
+            tokenStored: false
+          }, 400);
+        }
+
+        const control = await env.DB.prepare(`
+          SELECT state
+          FROM jumia_refresh_control
+          WHERE id = 1
+        `).first();
+
+        // Only an explicitly uncertain operation may be recovered.
+        // An active in_progress operation must not be overwritten.
+        if (!control || control.state !== "uncertain") {
+          return respond({
+            success: false,
+            error: "Refresh state must be uncertain before manual recovery",
+            currentState: control?.state || "missing",
+            tokenStored: false
+          }, 409);
+        }
+
+        const encrypted = await encryptText(
+          body.refresh_token.trim()
+        );
+
+        const timestamp = new Date().toISOString();
+
+        const results = await env.DB.batch([
+          env.DB.prepare(`
+            UPDATE jumia_tokens
+            SET
+              encrypted_refresh_token = ?,
+              refresh_iv = ?,
+              encrypted_access_token = NULL,
+              access_iv = NULL,
+              access_expires_at = NULL,
+              refresh_expires_at = NULL,
+              updated_at = ?
+            WHERE id = 1
+          `).bind(
+            encrypted.encrypted_token,
+            encrypted.iv,
+            timestamp
+          ),
+
+          env.DB.prepare(`
+            UPDATE jumia_refresh_control
+            SET
+              state = 'ready',
+              operation_id = NULL,
+              started_at = NULL,
+              updated_at = ?
+            WHERE id = 1
+              AND state = 'uncertain'
+          `).bind(timestamp)
+        ]);
+
+        if (
+          results[0].meta.changes !== 1 ||
+          results[1].meta.changes !== 1
+        ) {
+          throw new Error("Recovery persistence was not confirmed");
+        }
+
+        return respond({
+          success: true,
+          recoveryCompleted: true,
+          replacementRefreshTokenEncrypted: true,
+          replacementRefreshTokenVerified: false,
+          accessTokenCleared: true,
+          refreshExpiryRequiresVerification: true,
+          refreshControlState: "ready",
+          tokenValueExposed: false,
+          jumiaContacted: false
+        });
+
+      } catch (error) {
+        return respond({
+          success: false,
+          error: "Manual token recovery failed",
+          tokenValueExposed: false
+        }, 500);
+      }
+    }
+
+    // 13. Unknown routes
     return respond({
       error: "Route not found"
     }, 404);
