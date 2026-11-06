@@ -241,6 +241,81 @@ export default {
       }
     }
 
+    // 5. Prepare encrypted production token storage
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/prepare-token-storage"
+    ) {
+      if (!requireAdmin()) {
+        return respond({ error: "Unauthorized" }, 401);
+      }
+
+      if (!env.DB || !env.JUMIA_REFRESH_TOKEN) {
+        return respond({
+          error: "Database binding or Jumia refresh-token secret missing"
+        }, 500);
+      }
+
+      try {
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS jumia_tokens (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            encrypted_refresh_token TEXT NOT NULL,
+            refresh_iv TEXT NOT NULL,
+            encrypted_access_token TEXT,
+            access_iv TEXT,
+            access_expires_at TEXT,
+            refresh_expires_at TEXT,
+            updated_at TEXT NOT NULL
+          )
+        `).run();
+
+        const existing = await env.DB.prepare(`
+          SELECT id FROM jumia_tokens WHERE id = 1
+        `).first();
+
+        let initialized = false;
+
+        if (!existing) {
+          const encrypted = await encryptText(
+            env.JUMIA_REFRESH_TOKEN
+          );
+
+          await env.DB.prepare(`
+            INSERT INTO jumia_tokens (
+              id,
+              encrypted_refresh_token,
+              refresh_iv,
+              updated_at
+            ) VALUES (1, ?, ?, ?)
+          `).bind(
+            encrypted.encrypted_token,
+            encrypted.iv,
+            new Date().toISOString()
+          ).run();
+
+          initialized = true;
+        }
+
+        return respond({
+          success: true,
+          database: "D1",
+          encryptedStorageReady: true,
+          initialTokenStored: initialized,
+          existingTokenPreserved: !initialized,
+          jumiaContacted: false
+        });
+
+      } catch (error) {
+        return respond({
+          success: false,
+          error: "Production token storage preparation failed"
+        }, 500);
+      }
+    }
+
+    // 6. Unknown routes
+
     // 5. Unknown routes
     return respond({ error: "Route not found" }, 404);
   }
