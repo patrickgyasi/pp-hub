@@ -12,14 +12,12 @@ export default {
         }
       });
 
-    const requireAdmin = () => {
-      const authorization = request.headers.get("Authorization");
-
-      return Boolean(
+    const requireAdmin = () =>
+      Boolean(
         env.PPHUB_API_KEY &&
-        authorization === `Bearer ${env.PPHUB_API_KEY}`
+        request.headers.get("Authorization") ===
+          `Bearer ${env.PPHUB_API_KEY}`
       );
-    };
 
     async function getEncryptionKey() {
       if (!env.PPHUB_TOKEN_ENCRYPTION_KEY) {
@@ -27,7 +25,6 @@ export default {
       }
 
       const binary = atob(env.PPHUB_TOKEN_ENCRYPTION_KEY);
-
       const raw = Uint8Array.from(
         binary,
         c => c.charCodeAt(0)
@@ -46,14 +43,10 @@ export default {
       );
     }
 
-    async function encryptText(text) {
+    async function encryptText(value) {
       const key = await getEncryptionKey();
-
-      const iv = crypto.getRandomValues(
-        new Uint8Array(12)
-      );
-
-      const encoded = new TextEncoder().encode(text);
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encoded = new TextEncoder().encode(value);
 
       const ciphertext = await crypto.subtle.encrypt(
         { name: "AES-GCM", iv },
@@ -106,15 +99,16 @@ export default {
       });
     }
 
-    // 2. Initialize original token storage table
+    // All remaining routes require administrator authentication.
+    if (url.pathname.startsWith("/admin/") && !requireAdmin()) {
+      return respond({ error: "Unauthorized" }, 401);
+    }
+
+    // 2. Initialize original token storage
     if (
       request.method === "POST" &&
       url.pathname === "/admin/init-db"
     ) {
-      if (!requireAdmin()) {
-        return respond({ error: "Unauthorized" }, 401);
-      }
-
       if (!env.DB) {
         return respond({
           error: "Database binding missing"
@@ -136,7 +130,7 @@ export default {
           success: true,
           message: "Token storage table is ready."
         });
-      } catch (error) {
+      } catch {
         return respond({
           error: "Database initialization failed"
         }, 500);
@@ -148,10 +142,6 @@ export default {
       request.method === "POST" &&
       url.pathname === "/admin/test-encryption"
     ) {
-      if (!requireAdmin()) {
-        return respond({ error: "Unauthorized" }, 401);
-      }
-
       try {
         const testValue = crypto.randomUUID();
         const encrypted = await encryptText(testValue);
@@ -162,10 +152,7 @@ export default {
         );
 
         if (decrypted !== testValue) {
-          return respond({
-            success: false,
-            error: "Encryption verification failed"
-          }, 500);
+          throw new Error("Encryption verification failed");
         }
 
         return respond({
@@ -174,7 +161,7 @@ export default {
           keyLength: 256,
           roundTripVerified: true
         });
-      } catch (error) {
+      } catch {
         return respond({
           success: false,
           error: "Encryption test failed"
@@ -187,10 +174,6 @@ export default {
       request.method === "POST" &&
       url.pathname === "/admin/test-token-storage"
     ) {
-      if (!requireAdmin()) {
-        return respond({ error: "Unauthorized" }, 401);
-      }
-
       if (!env.DB) {
         return respond({
           error: "Database binding missing"
@@ -212,7 +195,7 @@ export default {
 
         await env.DB.prepare(`
           INSERT INTO encryption_test
-          (id, encrypted_token, iv, updated_at)
+            (id, encrypted_token, iv, updated_at)
           VALUES (1, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             encrypted_token = excluded.encrypted_token,
@@ -256,7 +239,7 @@ export default {
           roundTripVerified: true,
           testRecordDeleted: true
         });
-      } catch (error) {
+      } catch {
         return respond({
           success: false,
           error: "Token storage test failed"
@@ -269,10 +252,6 @@ export default {
       request.method === "POST" &&
       url.pathname === "/admin/prepare-token-storage"
     ) {
-      if (!requireAdmin()) {
-        return respond({ error: "Unauthorized" }, 401);
-      }
-
       if (!env.DB || !env.JUMIA_REFRESH_TOKEN) {
         return respond({
           error: "Production configuration incomplete",
@@ -333,7 +312,7 @@ export default {
           existingTokenPreserved: !initialized,
           jumiaContacted: false
         });
-      } catch (error) {
+      } catch {
         return respond({
           success: false,
           error: "Production token storage preparation failed"
@@ -346,10 +325,6 @@ export default {
       request.method === "POST" &&
       url.pathname === "/admin/verify-token-storage"
     ) {
-      if (!requireAdmin()) {
-        return respond({ error: "Unauthorized" }, 401);
-      }
-
       if (!env.DB || !env.JUMIA_REFRESH_TOKEN) {
         return respond({
           error: "Required configuration missing"
@@ -386,7 +361,7 @@ export default {
           tokenValueExposed: false,
           jumiaContacted: false
         }, matchesOriginal ? 200 : 409);
-      } catch (error) {
+      } catch {
         return respond({
           success: false,
           error: "Token recovery verification failed"
@@ -399,10 +374,6 @@ export default {
       request.method === "POST" &&
       url.pathname === "/admin/test-refresh-lock"
     ) {
-      if (!requireAdmin()) {
-        return respond({ error: "Unauthorized" }, 401);
-      }
-
       if (!env.DB) {
         return respond({
           error: "Database binding missing"
@@ -443,8 +414,6 @@ export default {
 
         lockAcquired = true;
 
-        const secondOwner = crypto.randomUUID();
-
         const second = await env.DB.prepare(`
           INSERT INTO refresh_lock (id, owner, expires_at)
           VALUES (1, ?, ?)
@@ -453,7 +422,7 @@ export default {
             expires_at = excluded.expires_at
           WHERE refresh_lock.expires_at <= ?
         `).bind(
-          secondOwner,
+          crypto.randomUUID(),
           now + 90,
           now
         ).run();
@@ -470,7 +439,7 @@ export default {
           ownershipVerified: true,
           jumiaContacted: false
         });
-      } catch (error) {
+      } catch {
         return respond({
           success: false,
           error: "Refresh-lock test failed"
@@ -482,7 +451,7 @@ export default {
               DELETE FROM refresh_lock
               WHERE id = 1 AND owner = ?
             `).bind(lockOwner).run();
-          } catch (error) {
+          } catch {
             // Preserve the original test result.
           }
         }
@@ -494,10 +463,6 @@ export default {
       request.method === "POST" &&
       url.pathname === "/admin/jumia/refresh-preflight"
     ) {
-      if (!requireAdmin()) {
-        return respond({ error: "Unauthorized" }, 401);
-      }
-
       if (!env.DB || !env.JUMIA_CLIENT_ID) {
         return respond({
           success: false,
@@ -532,7 +497,6 @@ export default {
         }
 
         const form = new URLSearchParams();
-
         form.set("grant_type", "refresh_token");
         form.set("client_id", env.JUMIA_CLIENT_ID);
         form.set("refresh_token", refreshToken);
@@ -556,7 +520,7 @@ export default {
           liveRequestSent: false,
           jumiaContacted: false
         });
-      } catch (error) {
+      } catch {
         return respond({
           success: false,
           error: "Jumia preflight failed",
@@ -570,10 +534,6 @@ export default {
       request.method === "POST" &&
       url.pathname === "/admin/jumia/prepare-refresh-control"
     ) {
-      if (!requireAdmin()) {
-        return respond({ error: "Unauthorized" }, 401);
-      }
-
       if (!env.DB) {
         return respond({
           success: false,
@@ -621,7 +581,7 @@ export default {
           manualRecoveryRequired: control.state === "uncertain",
           jumiaContacted: false
         });
-      } catch (error) {
+      } catch {
         return respond({
           success: false,
           error: "Refresh control preparation failed",
@@ -631,14 +591,11 @@ export default {
     }
 
     // 10. Protected Jumia live token refresh
+    // Keep JUMIA_LIVE_REFRESH_ENABLED unset.
     if (
       request.method === "POST" &&
       url.pathname === "/admin/jumia/refresh"
     ) {
-      if (!requireAdmin()) {
-        return respond({ error: "Unauthorized" }, 401);
-      }
-
       if (env.JUMIA_LIVE_REFRESH_ENABLED !== "true") {
         return respond({
           success: false,
@@ -659,7 +616,6 @@ export default {
 
       const operationId = crypto.randomUUID();
       const startedAt = new Date().toISOString();
-
       let requestSent = false;
 
       try {
@@ -717,7 +673,6 @@ export default {
         }
 
         const form = new URLSearchParams();
-
         form.set("grant_type", "refresh_token");
         form.set("client_id", env.JUMIA_CLIENT_ID);
         form.set("refresh_token", refreshToken);
@@ -830,7 +785,7 @@ export default {
               persisted = true;
               break;
             }
-          } catch (error) {
+          } catch {
             // Retry while replacement tokens remain in memory.
           }
         }
@@ -851,7 +806,7 @@ export default {
           jumiaContacted: true
         });
 
-      } catch (error) {
+      } catch {
         try {
           await env.DB.prepare(`
             UPDATE jumia_refresh_control
@@ -865,7 +820,7 @@ export default {
             new Date().toISOString(),
             operationId
           ).run();
-        } catch (recoveryError) {
+        } catch {
           // Existing in_progress state blocks another refresh.
         }
 
@@ -880,15 +835,11 @@ export default {
       }
     }
 
-    // 11. Test Jumia refresh concurrency and dummy-token persistence
+    // 11. Test concurrency and dummy-token persistence
     if (
       request.method === "POST" &&
       url.pathname === "/admin/jumia/test-refresh-safety"
     ) {
-      if (!requireAdmin()) {
-        return respond({ error: "Unauthorized" }, 401);
-      }
-
       if (!env.DB) {
         return respond({
           success: false,
@@ -1017,13 +968,10 @@ export default {
           saved.refresh_iv
         );
 
-        const accessVerified =
-          recoveredAccess === dummyAccess;
-
-        const refreshVerified =
-          recoveredRefresh === dummyRefresh;
-
-        if (!accessVerified || !refreshVerified) {
+        if (
+          recoveredAccess !== dummyAccess ||
+          recoveredRefresh !== dummyRefresh
+        ) {
           throw new Error("Dummy token recovery failed");
         }
 
@@ -1045,7 +993,7 @@ export default {
           jumiaContacted: false
         });
 
-      } catch (error) {
+      } catch {
         return respond({
           success: false,
           error: "Refresh safety test failed",
@@ -1059,7 +1007,7 @@ export default {
               DELETE FROM jumia_token_persistence_test
               WHERE id = ?
             `).bind(testId).run();
-          } catch (error) {
+          } catch {
             // Test record cleanup can be retried separately.
           }
         }
@@ -1080,22 +1028,18 @@ export default {
               new Date().toISOString(),
               acquiredOwner
             ).run();
-          } catch (error) {
+          } catch {
             // Do not overwrite another operation's state.
           }
         }
       }
     }
 
-    // 12. Manual Jumia refresh-token recovery
+    // 12. Safely stage a replacement Jumia refresh token
     if (
       request.method === "POST" &&
-      url.pathname === "/admin/jumia/recover-refresh-token"
+      url.pathname === "/admin/jumia/stage-recovery-token"
     ) {
-      if (!requireAdmin()) {
-        return respond({ error: "Unauthorized" }, 401);
-      }
-
       if (!env.DB) {
         return respond({
           success: false,
@@ -1103,36 +1047,69 @@ export default {
         }, 500);
       }
 
+      let body;
+
       try {
-        const body = await request.json();
+        body = await request.json();
+      } catch {
+        return respond({
+          success: false,
+          error: "A valid JSON body is required",
+          tokenStored: false
+        }, 400);
+      }
 
-        if (
-          body.confirm !==
-            "I_HAVE_A_VALID_REPLACEMENT_REFRESH_TOKEN" ||
-          typeof body.refresh_token !== "string" ||
-          !body.refresh_token.trim()
-        ) {
-          return respond({
-            success: false,
-            error: "Valid replacement token and confirmation required",
-            tokenStored: false
-          }, 400);
-        }
+      if (
+        !body ||
+        body.confirm !== "STAGE_REPLACEMENT_TOKEN" ||
+        typeof body.refresh_token !== "string" ||
+        !body.refresh_token.trim()
+      ) {
+        return respond({
+          success: false,
+          error: "Replacement token and confirmation required",
+          tokenStored: false
+        }, 400);
+      }
 
+      try {
         const control = await env.DB.prepare(`
           SELECT state
           FROM jumia_refresh_control
           WHERE id = 1
         `).first();
 
-        // Only an explicitly uncertain operation may be recovered.
-        // An active in_progress operation must not be overwritten.
         if (!control || control.state !== "uncertain") {
           return respond({
             success: false,
-            error: "Refresh state must be uncertain before manual recovery",
+            error: "Refresh control must be uncertain",
             currentState: control?.state || "missing",
             tokenStored: false
+          }, 409);
+        }
+
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS jumia_pending_recovery (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            encrypted_refresh_token TEXT NOT NULL,
+            refresh_iv TEXT NOT NULL,
+            created_at TEXT NOT NULL
+          )
+        `).run();
+
+        const existing = await env.DB.prepare(`
+          SELECT id
+          FROM jumia_pending_recovery
+          WHERE id = 1
+        `).first();
+
+        if (existing) {
+          return respond({
+            success: false,
+            error: "A pending recovery token already exists",
+            tokenStored: false,
+            manualReviewRequired: true,
+            jumiaContacted: false
           }, 409);
         }
 
@@ -1140,62 +1117,37 @@ export default {
           body.refresh_token.trim()
         );
 
-        const timestamp = new Date().toISOString();
-
-        const results = await env.DB.batch([
-          env.DB.prepare(`
-            UPDATE jumia_tokens
-            SET
-              encrypted_refresh_token = ?,
-              refresh_iv = ?,
-              encrypted_access_token = NULL,
-              access_iv = NULL,
-              access_expires_at = NULL,
-              refresh_expires_at = NULL,
-              updated_at = ?
-            WHERE id = 1
-          `).bind(
-            encrypted.encrypted_token,
-            encrypted.iv,
-            timestamp
-          ),
-
-          env.DB.prepare(`
-            UPDATE jumia_refresh_control
-            SET
-              state = 'ready',
-              operation_id = NULL,
-              started_at = NULL,
-              updated_at = ?
-            WHERE id = 1
-              AND state = 'uncertain'
-          `).bind(timestamp)
-        ]);
-
-        if (
-          results[0].meta.changes !== 1 ||
-          results[1].meta.changes !== 1
-        ) {
-          throw new Error("Recovery persistence was not confirmed");
-        }
+        await env.DB.prepare(`
+          INSERT INTO jumia_pending_recovery (
+            id,
+            encrypted_refresh_token,
+            refresh_iv,
+            created_at
+          )
+          VALUES (1, ?, ?, ?)
+        `).bind(
+          encrypted.encrypted_token,
+          encrypted.iv,
+          new Date().toISOString()
+        ).run();
 
         return respond({
           success: true,
-          recoveryCompleted: true,
-          replacementRefreshTokenEncrypted: true,
-          replacementRefreshTokenVerified: false,
-          accessTokenCleared: true,
-          refreshExpiryRequiresVerification: true,
-          refreshControlState: "ready",
+          pendingRecoveryTokenStored: true,
+          encrypted: true,
+          activeTokenChanged: false,
+          refreshControlState: "uncertain",
           tokenValueExposed: false,
+          tokenVerifiedWithJumia: false,
           jumiaContacted: false
         });
 
-      } catch (error) {
+      } catch {
         return respond({
           success: false,
-          error: "Manual token recovery failed",
-          tokenValueExposed: false
+          error: "Recovery token staging failed",
+          tokenValueExposed: false,
+          jumiaContacted: false
         }, 500);
       }
     }
