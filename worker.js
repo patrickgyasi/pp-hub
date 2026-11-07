@@ -99,9 +99,14 @@ export default {
       });
     }
 
-    // All remaining routes require administrator authentication.
-    if (url.pathname.startsWith("/admin/") && !requireAdmin()) {
-      return respond({ error: "Unauthorized" }, 401);
+    // All remaining admin routes require authentication.
+    if (
+      url.pathname.startsWith("/admin/") &&
+      !requireAdmin()
+    ) {
+      return respond({
+        error: "Unauthorized"
+      }, 401);
     }
 
     // 2. Initialize original token storage
@@ -194,8 +199,12 @@ export default {
         const encrypted = await encryptText(testValue);
 
         await env.DB.prepare(`
-          INSERT INTO encryption_test
-            (id, encrypted_token, iv, updated_at)
+          INSERT INTO encryption_test (
+            id,
+            encrypted_token,
+            iv,
+            updated_at
+          )
           VALUES (1, ?, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             encrypted_token = excluded.encrypted_token,
@@ -227,7 +236,8 @@ export default {
         }
 
         await env.DB.prepare(`
-          DELETE FROM encryption_test WHERE id = 1
+          DELETE FROM encryption_test
+          WHERE id = 1
         `).run();
 
         return respond({
@@ -277,7 +287,9 @@ export default {
         `).run();
 
         const existing = await env.DB.prepare(`
-          SELECT id FROM jumia_tokens WHERE id = 1
+          SELECT id
+          FROM jumia_tokens
+          WHERE id = 1
         `).first();
 
         let initialized = false;
@@ -396,7 +408,11 @@ export default {
         lockOwner = crypto.randomUUID();
 
         const first = await env.DB.prepare(`
-          INSERT INTO refresh_lock (id, owner, expires_at)
+          INSERT INTO refresh_lock (
+            id,
+            owner,
+            expires_at
+          )
           VALUES (1, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             owner = excluded.owner,
@@ -415,7 +431,11 @@ export default {
         lockAcquired = true;
 
         const second = await env.DB.prepare(`
-          INSERT INTO refresh_lock (id, owner, expires_at)
+          INSERT INTO refresh_lock (
+            id,
+            owner,
+            expires_at
+          )
           VALUES (1, ?, ?)
           ON CONFLICT(id) DO UPDATE SET
             owner = excluded.owner,
@@ -449,7 +469,8 @@ export default {
           try {
             await env.DB.prepare(`
               DELETE FROM refresh_lock
-              WHERE id = 1 AND owner = ?
+              WHERE id = 1
+                AND owner = ?
             `).bind(lockOwner).run();
           } catch {
             // Preserve the original test result.
@@ -556,7 +577,9 @@ export default {
 
         await env.DB.prepare(`
           INSERT INTO jumia_refresh_control (
-            id, state, updated_at
+            id,
+            state,
+            updated_at
           )
           VALUES (1, 'ready', ?)
           ON CONFLICT(id) DO NOTHING
@@ -577,8 +600,10 @@ export default {
           database: "D1",
           refreshControlTableReady: true,
           state: control.state,
-          operationInProgress: control.state === "in_progress",
-          manualRecoveryRequired: control.state === "uncertain",
+          operationInProgress:
+            control.state === "in_progress",
+          manualRecoveryRequired:
+            control.state === "uncertain",
           jumiaContacted: false
         });
       } catch {
@@ -629,7 +654,9 @@ export default {
           WHERE id = 1
             AND state = 'ready'
             AND EXISTS (
-              SELECT 1 FROM jumia_tokens WHERE id = 1
+              SELECT 1
+              FROM jumia_tokens
+              WHERE id = 1
             )
         `).bind(
           operationId,
@@ -684,7 +711,8 @@ export default {
           {
             method: "POST",
             headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
+              "Content-Type":
+                "application/x-www-form-urlencoded",
               "Accept": "application/json"
             },
             body: form.toString()
@@ -714,7 +742,9 @@ export default {
           !Number.isFinite(refreshExpiresIn) ||
           refreshExpiresIn <= 0
         ) {
-          throw new Error("Jumia token response validation failed");
+          throw new Error(
+            "Jumia token response validation failed"
+          );
         }
 
         const encryptedAccess = await encryptText(
@@ -733,7 +763,8 @@ export default {
         ).toISOString();
 
         const refreshExpiresAt = new Date(
-          completedAt.getTime() + refreshExpiresIn * 1000
+          completedAt.getTime() +
+            refreshExpiresIn * 1000
         ).toISOString();
 
         let persisted = false;
@@ -791,7 +822,9 @@ export default {
         }
 
         if (!persisted) {
-          throw new Error("Token persistence was not confirmed");
+          throw new Error(
+            "Token persistence was not confirmed"
+          );
         }
 
         return respond({
@@ -826,8 +859,10 @@ export default {
 
         return respond({
           success: false,
-          error: "Jumia refresh could not be safely completed",
-          refreshControlState: "uncertain_or_in_progress",
+          error:
+            "Jumia refresh could not be safely completed",
+          refreshControlState:
+            "uncertain_or_in_progress",
           liveRequestSent: requestSent,
           jumiaContacted: requestSent,
           manualRecoveryRequired: requestSent
@@ -864,14 +899,16 @@ export default {
         if (!current || current.state !== "ready") {
           return respond({
             success: false,
-            error: "Refresh control must be ready before testing",
+            error:
+              "Refresh control must be ready before testing",
             currentState: current?.state || "missing",
             jumiaContacted: false
           }, 409);
         }
 
         await env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS jumia_token_persistence_test (
+          CREATE TABLE IF NOT EXISTS
+          jumia_token_persistence_test (
             id TEXT PRIMARY KEY,
             encrypted_access_token TEXT NOT NULL,
             access_iv TEXT NOT NULL,
@@ -889,7 +926,8 @@ export default {
               operation_id = ?,
               started_at = ?,
               updated_at = ?
-            WHERE id = 1 AND state = 'ready'
+            WHERE id = 1
+              AND state = 'ready'
           `).bind(
             owner,
             new Date().toISOString(),
@@ -909,10 +947,13 @@ export default {
           ![0, 1].includes(changesA) ||
           ![0, 1].includes(changesB)
         ) {
-          throw new Error("Concurrent control test failed");
+          throw new Error(
+            "Concurrent control test failed"
+          );
         }
 
-        acquiredOwner = changesA === 1 ? ownerA : ownerB;
+        acquiredOwner =
+          changesA === 1 ? ownerA : ownerB;
 
         const dummyAccess =
           `TEST_ACCESS_${crypto.randomUUID()}`;
@@ -920,8 +961,11 @@ export default {
         const dummyRefresh =
           `TEST_REFRESH_${crypto.randomUUID()}`;
 
-        const encryptedAccess = await encryptText(dummyAccess);
-        const encryptedRefresh = await encryptText(dummyRefresh);
+        const encryptedAccess =
+          await encryptText(dummyAccess);
+
+        const encryptedRefresh =
+          await encryptText(dummyRefresh);
 
         await env.DB.prepare(`
           INSERT INTO jumia_token_persistence_test (
@@ -955,7 +999,9 @@ export default {
         `).bind(testId).first();
 
         if (!saved) {
-          throw new Error("Dummy token record not found");
+          throw new Error(
+            "Dummy token record not found"
+          );
         }
 
         const recoveredAccess = await decryptText(
@@ -972,7 +1018,9 @@ export default {
           recoveredAccess !== dummyAccess ||
           recoveredRefresh !== dummyRefresh
         ) {
-          throw new Error("Dummy token recovery failed");
+          throw new Error(
+            "Dummy token recovery failed"
+          );
         }
 
         return respond({
@@ -1035,10 +1083,180 @@ export default {
       }
     }
 
-    // 12. Safely stage a replacement Jumia refresh token
+    // 12. Test isolated encrypted recovery storage.
+    // This route never uses the real pending recovery slot.
     if (
       request.method === "POST" &&
-      url.pathname === "/admin/jumia/stage-recovery-token"
+      url.pathname ===
+        "/admin/jumia/test-recovery-storage"
+    ) {
+      if (!env.DB) {
+        return respond({
+          success: false,
+          error: "Database binding missing",
+          jumiaContacted: false
+        }, 500);
+      }
+
+      const testId = crypto.randomUUID();
+      const dummyToken =
+        `PPHUB_DUMMY_RECOVERY_${testId}`;
+
+      let testRecordStored = false;
+      let cleanupVerified = false;
+
+      try {
+        // Confirm that the real recovery table exists.
+        const table = await env.DB.prepare(`
+          SELECT name
+          FROM sqlite_master
+          WHERE type = 'table'
+            AND name = 'jumia_pending_recovery'
+        `).first();
+
+        if (!table) {
+          return respond({
+            success: false,
+            error: "Recovery table does not exist",
+            jumiaContacted: false
+          }, 404);
+        }
+
+        // Check the real pending recovery slot.
+        const existing = await env.DB.prepare(`
+          SELECT id
+          FROM jumia_pending_recovery
+          WHERE id = 1
+        `).first();
+
+        if (existing) {
+          return respond({
+            success: false,
+            error:
+              "A real pending recovery record already exists",
+            testStarted: false,
+            existingRecordPreserved: true,
+            jumiaContacted: false
+          }, 409);
+        }
+
+        // Create a separate test table.
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS
+          jumia_recovery_test (
+            id TEXT PRIMARY KEY,
+            encrypted_refresh_token TEXT NOT NULL,
+            refresh_iv TEXT NOT NULL,
+            created_at TEXT NOT NULL
+          )
+        `).run();
+
+        // Encrypt the dummy token.
+        const encrypted = await encryptText(dummyToken);
+
+        // Store the dummy token in the isolated test table.
+        await env.DB.prepare(`
+          INSERT INTO jumia_recovery_test (
+            id,
+            encrypted_refresh_token,
+            refresh_iv,
+            created_at
+          )
+          VALUES (?, ?, ?, ?)
+        `).bind(
+          testId,
+          encrypted.encrypted_token,
+          encrypted.iv,
+          new Date().toISOString()
+        ).run();
+
+        testRecordStored = true;
+
+        // Retrieve the encrypted dummy token.
+        const saved = await env.DB.prepare(`
+          SELECT
+            encrypted_refresh_token,
+            refresh_iv
+          FROM jumia_recovery_test
+          WHERE id = ?
+        `).bind(testId).first();
+
+        if (!saved) {
+          throw new Error(
+            "Recovery test record not found"
+          );
+        }
+
+        // Decrypt the retrieved token.
+        const recovered = await decryptText(
+          saved.encrypted_refresh_token,
+          saved.refresh_iv
+        );
+
+        if (recovered !== dummyToken) {
+          throw new Error(
+            "Recovery verification failed"
+          );
+        }
+
+        // Delete only this test's record.
+        await env.DB.prepare(`
+          DELETE FROM jumia_recovery_test
+          WHERE id = ?
+        `).bind(testId).run();
+
+        testRecordStored = false;
+
+        const remaining = await env.DB.prepare(`
+          SELECT id
+          FROM jumia_recovery_test
+          WHERE id = ?
+        `).bind(testId).first();
+
+        cleanupVerified = !remaining;
+
+        if (!cleanupVerified) {
+          throw new Error(
+            "Test cleanup could not be verified"
+          );
+        }
+
+        return respond({
+          success: true,
+          recoveryStorageTest: {
+            dummyTokenGenerated: true,
+            encryptionSuccessful: true,
+            databaseStorageSuccessful: true,
+            databaseRetrievalSuccessful: true,
+            decryptionSuccessful: true,
+            recoveredValueMatched: true,
+            testRecordDeleted: true,
+            cleanupVerified: true
+          },
+          activeTokenChanged: false,
+          realPendingRecoveryRecordChanged: false,
+          refreshControlChanged: false,
+          jumiaContacted: false,
+          tokenValueExposed: false
+        });
+
+      } catch {
+        return respond({
+          success: false,
+          error: "Recovery storage test failed",
+          testRecordMayRemain: testRecordStored,
+          cleanupVerified,
+          jumiaContacted: false,
+          tokenValueExposed: false
+        }, 500);
+      }
+    }
+
+    // 13. Safely stage a replacement Jumia refresh token.
+    if (
+      request.method === "POST" &&
+      url.pathname ===
+        "/admin/jumia/stage-recovery-token"
     ) {
       if (!env.DB) {
         return respond({
@@ -1067,7 +1285,8 @@ export default {
       ) {
         return respond({
           success: false,
-          error: "Replacement token and confirmation required",
+          error:
+            "Replacement token and confirmation required",
           tokenStored: false
         }, 400);
       }
@@ -1079,7 +1298,10 @@ export default {
           WHERE id = 1
         `).first();
 
-        if (!control || control.state !== "uncertain") {
+        if (
+          !control ||
+          control.state !== "uncertain"
+        ) {
           return respond({
             success: false,
             error: "Refresh control must be uncertain",
@@ -1089,7 +1311,8 @@ export default {
         }
 
         await env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS jumia_pending_recovery (
+          CREATE TABLE IF NOT EXISTS
+          jumia_pending_recovery (
             id INTEGER PRIMARY KEY CHECK (id = 1),
             encrypted_refresh_token TEXT NOT NULL,
             refresh_iv TEXT NOT NULL,
@@ -1106,7 +1329,8 @@ export default {
         if (existing) {
           return respond({
             success: false,
-            error: "A pending recovery token already exists",
+            error:
+              "A pending recovery token already exists",
             tokenStored: false,
             manualReviewRequired: true,
             jumiaContacted: false
@@ -1152,7 +1376,7 @@ export default {
       }
     }
 
-    // 13. Unknown routes
+    // 14. Unknown routes
     return respond({
       error: "Route not found"
     }, 404);
