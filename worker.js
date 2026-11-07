@@ -1084,7 +1084,6 @@ export default {
     }
 
     // 12. Test isolated encrypted recovery storage.
-    // This route never uses the real pending recovery slot.
     if (
       request.method === "POST" &&
       url.pathname ===
@@ -1106,7 +1105,6 @@ export default {
       let cleanupVerified = false;
 
       try {
-        // Confirm that the real recovery table exists.
         const table = await env.DB.prepare(`
           SELECT name
           FROM sqlite_master
@@ -1122,7 +1120,6 @@ export default {
           }, 404);
         }
 
-        // Check the real pending recovery slot.
         const existing = await env.DB.prepare(`
           SELECT id
           FROM jumia_pending_recovery
@@ -1140,7 +1137,6 @@ export default {
           }, 409);
         }
 
-        // Create a separate test table.
         await env.DB.prepare(`
           CREATE TABLE IF NOT EXISTS
           jumia_recovery_test (
@@ -1151,10 +1147,8 @@ export default {
           )
         `).run();
 
-        // Encrypt the dummy token.
         const encrypted = await encryptText(dummyToken);
 
-        // Store the dummy token in the isolated test table.
         await env.DB.prepare(`
           INSERT INTO jumia_recovery_test (
             id,
@@ -1172,7 +1166,6 @@ export default {
 
         testRecordStored = true;
 
-        // Retrieve the encrypted dummy token.
         const saved = await env.DB.prepare(`
           SELECT
             encrypted_refresh_token,
@@ -1187,7 +1180,6 @@ export default {
           );
         }
 
-        // Decrypt the retrieved token.
         const recovered = await decryptText(
           saved.encrypted_refresh_token,
           saved.refresh_iv
@@ -1199,7 +1191,6 @@ export default {
           );
         }
 
-        // Delete only this test's record.
         await env.DB.prepare(`
           DELETE FROM jumia_recovery_test
           WHERE id = ?
@@ -1376,7 +1367,220 @@ export default {
       }
     }
 
-    // 14. Unknown routes
+    // 14. Start a Jumia refresh operation journal record.
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/jumia/operation/start"
+    ) {
+      if (!env.DB) {
+        return respond({
+          success: false,
+          error: "Database binding missing"
+        }, 500);
+      }
+
+      try {
+        const operationId = crypto.randomUUID();
+        const now = new Date().toISOString();
+
+        await env.DB.prepare(`
+          INSERT INTO jumia_refresh_operations (
+            operation_id,
+            status,
+            started_at,
+            created_at,
+            updated_at
+          )
+          VALUES (?, 'prepared', ?, ?, ?)
+        `).bind(
+          operationId,
+          now,
+          now,
+          now
+        ).run();
+
+        return respond({
+          success: true,
+          operationId,
+          status: "prepared",
+          created: true,
+          jumiaContacted: false
+        }, 201);
+      } catch {
+        return respond({
+          success: false,
+          error: "Operation journal creation failed",
+          jumiaContacted: false
+        }, 500);
+      }
+    }
+
+    // 15. Read operation status.
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/jumia/operation/status"
+    ) {
+      if (!env.DB) {
+        return respond({
+          success: false,
+          error: "Database binding missing"
+        }, 500);
+      }
+
+      let body;
+
+      try {
+        body = await request.json();
+      } catch {
+        return respond({
+          success: false,
+          error: "Valid JSON body required"
+        }, 400);
+      }
+
+      if (
+        !body ||
+        typeof body.operation_id !== "string" ||
+        !body.operation_id.trim()
+      ) {
+        return respond({
+          success: false,
+          error: "operation_id is required"
+        }, 400);
+      }
+
+      try {
+        const operation = await env.DB.prepare(`
+          SELECT
+            operation_id,
+            status,
+            started_at,
+            request_sent_at,
+            response_received_at,
+            persistence_confirmed_at,
+            completed_at,
+            http_status,
+            error_code,
+            created_at,
+            updated_at
+          FROM jumia_refresh_operations
+          WHERE operation_id = ?
+        `).bind(body.operation_id.trim()).first();
+
+        if (!operation) {
+          return respond({
+            success: false,
+            error: "Operation not found"
+          }, 404);
+        }
+
+        return respond({
+          success: true,
+          operation,
+          jumiaContacted: false
+        });
+      } catch {
+        return respond({
+          success: false,
+          error: "Operation status lookup failed"
+        }, 500);
+      }
+    }
+
+    // 16. Mark an operation as uncertain.
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/jumia/operation/mark-uncertain"
+    ) {
+      if (!env.DB) {
+        return respond({
+          success: false,
+          error: "Database binding missing"
+        }, 500);
+      }
+
+      let body;
+
+      try {
+        body = await request.json();
+      } catch {
+        return respond({
+          success: false,
+          error: "Valid JSON body required"
+        }, 400);
+      }
+
+      if (
+        !body ||
+        typeof body.operation_id !== "string" ||
+        !body.operation_id.trim()
+      ) {
+        return respond({
+          success: false,
+          error: "operation_id is required"
+        }, 400);
+      }
+
+      try {
+        const now = new Date().toISOString();
+
+        const result = await env.DB.prepare(`
+          UPDATE jumia_refresh_operations
+          SET
+            status = 'uncertain',
+            error_code = 'MANUAL_UNCERTAIN',
+            updated_at = ?
+          WHERE operation_id = ?
+            AND status IN (
+              'prepared',
+              'request_sent',
+              'response_received'
+            )
+        `).bind(
+          now,
+          body.operation_id.trim()
+        ).run();
+
+        if (result.meta.changes !== 1) {
+          const current = await env.DB.prepare(`
+            SELECT status
+            FROM jumia_refresh_operations
+            WHERE operation_id = ?
+          `).bind(body.operation_id.trim()).first();
+
+          if (!current) {
+            return respond({
+              success: false,
+              error: "Operation not found"
+            }, 404);
+          }
+
+          return respond({
+            success: false,
+            error:
+              "Operation cannot be marked uncertain from its current status",
+            currentStatus: current.status
+          }, 409);
+        }
+
+        return respond({
+          success: true,
+          operationId: body.operation_id.trim(),
+          status: "uncertain",
+          journalUpdated: true,
+          activeTokenChanged: false,
+          refreshControlChanged: false,
+          jumiaContacted: false
+        });
+      } catch {
+        return respond({
+          success: false,
+          error: "Could not update operation journal"
+        }, 500);
+      }
+    }
+
+    // 17. Unknown routes
     return respond({
       error: "Route not found"
     }, 404);
