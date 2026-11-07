@@ -1580,7 +1580,201 @@ export default {
       }
     }
 
-    // 17. Unknown routes
+    // 17. Controlled operation lifecycle transition.
+    // This updates the journal only; it never contacts Jumia.
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/jumia/operation/transition"
+    ) {
+      if (!env.DB) {
+        return respond({
+          success: false,
+          error: "Database binding missing"
+        }, 500);
+      }
+
+      let body;
+
+      try {
+        body = await request.json();
+      } catch {
+        return respond({
+          success: false,
+          error: "Valid JSON body required"
+        }, 400);
+      }
+
+      const operationId =
+        typeof body?.operation_id === "string"
+          ? body.operation_id.trim()
+          : "";
+
+      const nextStatus = body?.next_status;
+
+      const allowedTransitions = {
+        prepared: ["request_sent", "uncertain", "failed"],
+        request_sent: ["response_received", "uncertain", "failed"],
+        response_received: ["persisted", "uncertain", "failed"]
+      };
+
+      if (
+        !operationId ||
+        !Object.prototype.hasOwnProperty.call(
+          allowedTransitions,
+          nextStatus === "prepared" ? "" : nextStatus
+        )
+      ) {
+        // The operation ID is validated separately below.
+      }
+
+      if (
+        !operationId ||
+        ![
+          "request_sent",
+          "response_received",
+          "persisted",
+          "uncertain",
+          "failed"
+        ].includes(nextStatus)
+      ) {
+        return respond({
+          success: false,
+          error: "Valid operation_id and next_status are required"
+        }, 400);
+      }
+
+      if (
+        body.http_status !== undefined &&
+        (
+          !Number.isInteger(body.http_status) ||
+          body.http_status < 100 ||
+          body.http_status > 599
+        )
+      ) {
+        return respond({
+          success: false,
+          error: "http_status must be a valid HTTP status code"
+        }, 400);
+      }
+
+      if (
+        body.error_code !== undefined &&
+        (
+          typeof body.error_code !== "string" ||
+          body.error_code.length > 100
+        )
+      ) {
+        return respond({
+          success: false,
+          error: "Invalid error_code"
+        }, 400);
+      }
+
+      try {
+        const current = await env.DB.prepare(`
+          SELECT status
+          FROM jumia_refresh_operations
+          WHERE operation_id = ?
+        `).bind(operationId).first();
+
+        if (!current) {
+          return respond({
+            success: false,
+            error: "Operation not found"
+          }, 404);
+        }
+
+        const permitted =
+          allowedTransitions[current.status] || [];
+
+        if (!permitted.includes(nextStatus)) {
+          return respond({
+            success: false,
+            error: "Invalid operation status transition",
+            currentStatus: current.status,
+            requestedStatus: nextStatus,
+            permittedNextStatuses: permitted
+          }, 409);
+        }
+
+        const now = new Date().toISOString();
+
+        const timestampColumn = {
+          request_sent: "request_sent_at",
+          response_received: "response_received_at",
+          persisted: "persistence_confirmed_at"
+        }[nextStatus];
+
+        const completed = [
+          "persisted",
+          "uncertain",
+          "failed"
+        ].includes(nextStatus);
+
+        const update = await env.DB.prepare(`
+          UPDATE jumia_refresh_operations
+          SET
+            status = ?,
+            request_sent_at = CASE
+              WHEN ? = 'request_sent' THEN ?
+              ELSE request_sent_at
+            END,
+            response_received_at = CASE
+              WHEN ? = 'response_received' THEN ?
+              ELSE response_received_at
+            END,
+            persistence_confirmed_at = CASE
+              WHEN ? = 'persisted' THEN ?
+              ELSE persistence_confirmed_at
+            END,
+            completed_at = CASE
+              WHEN ? = 1 THEN ?
+              ELSE completed_at
+            END,
+            http_status = COALESCE(?, http_status),
+            error_code = COALESCE(?, error_code),
+            updated_at = ?
+          WHERE operation_id = ?
+            AND status = ?
+        `).bind(
+          nextStatus,
+          nextStatus, now,
+          nextStatus, now,
+          nextStatus, now,
+          completed ? 1 : 0, now,
+          body.http_status ?? null,
+          body.error_code ?? null,
+          now,
+          operationId,
+          current.status
+        ).run();
+
+        if (update.meta.changes !== 1) {
+          return respond({
+            success: false,
+            error: "Operation changed before update; retrieve its latest status"
+          }, 409);
+        }
+
+        return respond({
+          success: true,
+          operationId,
+          previousStatus: current.status,
+          status: nextStatus,
+          journalUpdated: true,
+          jumiaContacted: false
+        });
+
+      } catch {
+        return respond({
+          success: false,
+          error: "Operation transition failed",
+          jumiaContacted: false
+        }, 500);
+      }
+    }
+
+    // 18. Unknown routes
     return respond({
       error: "Route not found"
     }, 404);
