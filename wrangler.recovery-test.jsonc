@@ -1,0 +1,14 @@
+
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pp-hub-recovery-test",
+  "main": "worker.js",
+  "compatibility_date": "2026-11-08",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "pp-hub-recovery-test",
+      "database_id": "6d005f48-48be-40de-8ec8-f7d26d051090"
+    }
+  ]
+}
