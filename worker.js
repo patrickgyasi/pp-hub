@@ -1764,6 +1764,150 @@ export default {
       }
     
 }
+    
+    // 18. JTRE: Promote staged recovery token.
+    // This performs local integrity checks only.
+    // It does not contact Jumia or release refresh control.
+    if (
+      request.method === "POST" &&
+      url.pathname === "/admin/jumia/recovery/promote"
+    ) {
+      if (!env.DB) {
+        return respond({
+          success: false,
+          error: "Database binding missing",
+          jumiaContacted: false
+        }, 500);
+      }
+
+      try {
+        const control = await env.DB.prepare(`
+          SELECT state
+          FROM jumia_refresh_control
+          WHERE id = 1
+        `).first();
+
+        if (!control || control.state !== "uncertain") {
+          return respond({
+            success: false,
+            error: "Refresh control must be uncertain",
+            currentState: control?.state || "missing",
+            promoted: false,
+            jumiaContacted: false
+          }, 409);
+        }
+
+        const pending = await env.DB.prepare(`
+          SELECT
+            encrypted_refresh_token,
+            refresh_iv
+          FROM jumia_pending_recovery
+          WHERE id = 1
+        `).first();
+
+        if (!pending) {
+          return respond({
+            success: false,
+            error: "Pending recovery token not found",
+            promoted: false,
+            jumiaContacted: false
+          }, 404);
+        }
+
+        const recoveredToken = await decryptText(
+          pending.encrypted_refresh_token,
+          pending.refresh_iv
+        );
+
+        if (
+          typeof recoveredToken !== "string" ||
+          !recoveredToken.trim()
+        ) {
+          throw new Error("Recovery token integrity check failed");
+        }
+
+        const active = await env.DB.prepare(`
+          SELECT id
+          FROM jumia_tokens
+          WHERE id = 1
+        `).first();
+
+        if (!active) {
+          return respond({
+            success: false,
+            error: "Active token storage record not found",
+            promoted: false,
+            jumiaContacted: false
+          }, 409);
+        }
+
+        const now = new Date().toISOString();
+
+        const result = await env.DB.prepare(`
+          UPDATE jumia_tokens
+          SET
+            encrypted_refresh_token = ?,
+            refresh_iv = ?,
+            encrypted_access_token = NULL,
+            access_iv = NULL,
+            access_expires_at = NULL,
+            refresh_expires_at = NULL,
+            updated_at = ?
+          WHERE id = 1
+            AND EXISTS (
+              SELECT 1
+              FROM jumia_refresh_control
+              WHERE id = 1
+                AND state = 'uncertain'
+            )
+            AND EXISTS (
+              SELECT 1
+              FROM jumia_pending_recovery
+              WHERE id = 1
+                AND encrypted_refresh_token = ?
+                AND refresh_iv = ?
+            )
+        `).bind(
+          pending.encrypted_refresh_token,
+          pending.refresh_iv,
+          now,
+          pending.encrypted_refresh_token,
+          pending.refresh_iv
+        ).run();
+
+        if (result.meta.changes !== 1) {
+          return respond({
+            success: false,
+            error: "Promotion was not confirmed",
+            promoted: false,
+            refreshControlState: "uncertain",
+            jumiaContacted: false
+          }, 409);
+        }
+
+        return respond({
+          success: true,
+          promoted: true,
+          localIntegrityVerified: true,
+          pendingRecoveryPreserved: true,
+          activeTokenChanged: true,
+          refreshControlState: "uncertain",
+          tokenValueExposed: false,
+          tokenVerifiedWithJumia: false,
+          jumiaContacted: false
+        });
+
+      } catch {
+        return respond({
+          success: false,
+          error: "Recovery token promotion failed",
+          refreshControlState: "uncertain",
+          jumiaContacted: false,
+          tokenValueExposed: false
+        }, 500);
+      }
+    }
+
     // 18. Unknown routes
     return respond({
       error: "Route not found"
