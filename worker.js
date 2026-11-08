@@ -1,4 +1,4 @@
-
+Take a screen
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -1616,16 +1616,6 @@ export default {
         request_sent: ["response_received", "uncertain", "failed"],
         response_received: ["persisted", "uncertain", "failed"]
       };
-
-      if (
-        !operationId ||
-        !Object.prototype.hasOwnProperty.call(
-          allowedTransitions,
-          nextStatus === "prepared" ? "" : nextStatus
-        )
-      ) {
-        // The operation ID is validated separately below.
-      }
 
       if (
         !operationId ||
