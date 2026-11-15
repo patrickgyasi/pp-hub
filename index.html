@@ -1812,33 +1812,17 @@ async function getPPHubInventory() {
         request.onerror = () => reject(request.error);
     });
 }
-/* PP HUB DATABASE VERIFICATION */
+/* PP HUB DATABASE INITIALIZATION */
 
 initializePPHubInventory()
-    .then(async () => {
-
-        const records = await getPPHubInventory();
-
-        const names = records.map(
-            record => record.name
-        ).join("\n");
-
-        alert(
-            "PP HUB DATABASE VERIFIED\n\n" +
-            "Total inventory records: " + records.length +
-            "\n\n" + names
-        );
-
+    .then(() => {
+        console.log("PP Hub database ready.");
     })
     .catch(error => {
-
-        alert(
-            "PP Hub database verification failed: " +
-            error.message
+        console.error(
+            "PP Hub database initialization failed:",
+            error
         );
-
-        console.error(error);
-
     });
 </script>
 
