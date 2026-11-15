@@ -1093,6 +1093,63 @@ padding:20px;
         height: 110px;
     }
 }
+        /* PP HUB INVENTORY DASHBOARD */
+
+#inventory-dashboard {
+    margin-top: 35px;
+    padding: 18px;
+    background: #ffffff;
+    border: 1px solid #c9a44c;
+    border-radius: 12px;
+}
+
+.inventory-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.inventory-stat {
+    padding: 14px;
+    background: #eaf2ee;
+    border-radius: 9px;
+    border: 1px solid #c9d9cf;
+}
+
+.inventory-stat h3 {
+    font-size: 13px;
+    color: #17483e;
+}
+
+.inventory-stat p {
+    font-size: 25px;
+    font-weight: bold;
+    color: #176b45;
+}
+
+.inventory-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+#inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+#inventory-table th,
+#inventory-table td {
+    padding: 10px;
+    border: 1px solid #dce5df;
+    text-align: left;
+    white-space: nowrap;
+}
+
+#inventory-table th {
+    background: #17483e;
+    color: white;
+}
     </style>
 </head>
 
@@ -1287,7 +1344,61 @@ padding:20px;
 </div>
 
     </main>
+<!-- PP HUB INVENTORY DASHBOARD -->
 
+<section id="inventory-dashboard">
+
+    <h2>PP Hub Inventory Manager</h2>
+
+    <div class="inventory-summary">
+
+        <div class="inventory-stat">
+            <h3>Total Products</h3>
+            <p id="inv-total-products">0</p>
+        </div>
+
+        <div class="inventory-stat">
+            <h3>Stock Quantity</h3>
+            <p id="inv-total-stock">0</p>
+        </div>
+
+        <div class="inventory-stat">
+            <h3>Low Stock</h3>
+            <p id="inv-low-stock">0</p>
+        </div>
+
+        <div class="inventory-stat">
+            <h3>Pending Records</h3>
+            <p id="inv-pending">0</p>
+        </div>
+
+    </div>
+
+    <h3>Inventory Records</h3>
+
+    <div class="inventory-table-container">
+
+        <table id="inventory-table">
+
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Product</th>
+                    <th>Cost</th>
+                    <th>Selling Price</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody id="inventory-table-body">
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
     <footer>
         <p>PP Hub | Product discovery and buying guides</p>
 <p>Shop smart. Discover more with PP Hub.</p>
