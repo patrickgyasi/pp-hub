@@ -1811,19 +1811,15 @@ async function getPPHubInventory() {
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
-}
-
 /* Initialize database */
 
 initializePPHubInventory()
     .then(() => {
-        console.log("PP Hub inventory database initialized.");
+        alert("PP Hub database initialized successfully!");
     })
     .catch(error => {
-        console.error(
-            "PP Hub inventory initialization failed:",
-            error
-        );
+        alert("Database initialization failed: " + error.message);
+        console.error(error);
     });
 </script>
 
