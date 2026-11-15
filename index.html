@@ -1587,7 +1587,7 @@ navLinks.forEach(function(link) {
 
         filterCatalogue();
         
-
+history.replaceState(null, "", target);
         if (activeCategory === "all" ||
             activeCategory === "phone-accessories") {
             productGrid.scrollIntoView({
@@ -1811,6 +1811,7 @@ async function getPPHubInventory() {
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
     });
+}
 /* Initialize database */
 
 initializePPHubInventory()
