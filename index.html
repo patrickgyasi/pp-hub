@@ -1923,17 +1923,101 @@ async function getPPHubInventory() {
         request.onerror = () => reject(request.error);
     });
 }
+    /* PP HUB DASHBOARD DATA CONNECTION */
+
+async function renderPPHubDashboard() {
+
+    const records = await getPPHubInventory();
+
+    const totalProducts = records.length;
+
+    let totalStock = 0;
+    let lowStock = 0;
+    let pending = 0;
+
+    const tableBody = document.getElementById(
+        "inventory-table-body"
+    );
+
+    tableBody.innerHTML = "";
+
+    records.forEach(record => {
+
+        const quantity = Number(record.quantity) || 0;
+
+        totalStock += quantity;
+
+        if (
+            record.quantity !== null &&
+            quantity <= record.reorderLevel
+        ) {
+            lowStock++;
+        }
+
+        if (record.status === "pending") {
+            pending++;
+        }
+
+        const row = document.createElement("tr");
+
+        const values = [
+            record.sku,
+            record.name,
+            record.costPrice ?? "Not set",
+            record.sellingPrice,
+            record.quantity ?? "Not set",
+            record.status
+        ];
+
+        values.forEach(value => {
+
+            const cell = document.createElement("td");
+
+            cell.textContent = value;
+
+            row.appendChild(cell);
+
+        });
+
+        tableBody.appendChild(row);
+
+    });
+
+    document.getElementById(
+        "inv-total-products"
+    ).textContent = totalProducts;
+
+    document.getElementById(
+        "inv-total-stock"
+    ).textContent = totalStock;
+
+    document.getElementById(
+        "inv-low-stock"
+    ).textContent = lowStock;
+
+    document.getElementById(
+        "inv-pending"
+    ).textContent = pending;
+}
 /* PP HUB DATABASE INITIALIZATION */
 
 initializePPHubInventory()
-    .then(() => {
-        console.log("PP Hub database ready.");
+    .then(async () => {
+
+        await renderPPHubDashboard();
+
+        console.log(
+            "PP Hub inventory dashboard connected."
+        );
+
     })
     .catch(error => {
+
         console.error(
-            "PP Hub database initialization failed:",
+            "PP Hub dashboard error:",
             error
         );
+
     });
 </script>
 
