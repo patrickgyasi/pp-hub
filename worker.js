@@ -135,7 +135,7 @@ if (request.method === "OPTIONS") {
         service: "PP Hub API",
         status: "online"
       });
-    
+    }
     // All remaining admin routes require authentication.
     if (
       url.pathname.startsWith("/admin/") &&
@@ -998,31 +998,68 @@ const countResult = await env.DB.prepare(countSql)
           liveRequestSent: true,
           jumiaContacted: true
         });
-
       } catch {
+              } catch {
         try {
-          await env.DB.prepare(`
-            UPDATE jumia_refresh_control
-            SET
-              state = 'uncertain',
-              updated_at = ?
-            WHERE id = 1
-              AND state = 'in_progress'
-              AND operation_id = ?
-          `).bind(
-            new Date().toISOString(),
-            operationId
-          ).run();
+          if (requestSent) {
+            await env.DB.prepare(`
+              UPDATE jumia_refresh_control
+              SET
+                state = 'uncertain',
+                updated_at = ?
+              WHERE id = 1
+                AND state = 'in_progress'
+                AND operation_id = ?
+            `).bind(
+              new Date().toISOString(),
+              operationId
+            ).run();
+          } else {
+            await env.DB.prepare(`
+              UPDATE jumia_refresh_control
+              SET
+                state = 'ready',
+                operation_id = NULL,
+                started_at = NULL,
+                updated_at = ?
+              WHERE id = 1
+                AND state = 'in_progress'
+                AND operation_id = ?
+            `).bind(
+              new Date().toISOString(),
+              operationId
+            ).run();
+          }
         } catch {
-          // Existing in_progress state blocks another refresh.
+          // Preserve the existing state if recovery fails.
         }
 
         return respond({
           success: false,
-          error:
-            "Jumia refresh could not be safely completed",
-          refreshControlState:
-            "uncertain_or_in_progress",
+          error: requestSent
+            ? "Jumia refresh outcome is uncertain; manual recovery is required"
+            : "Jumia refresh failed before the external request was sent",
+          refreshControlState: requestSent
+            ? "uncertain_or_in_progress"
+            : "ready_or_in_progress",
+          liveRequestSent: requestSent,
+          jumiaContacted: requestSent,
+          manualRecoveryRequired: requestSent
+        }, 502);
+      }
+          }
+        } catch {
+          // Preserve the existing state if recovery fails.
+        }
+
+        return respond({
+          success: false,
+          error: requestSent
+            ? "Jumia refresh outcome is uncertain; manual recovery is required"
+            : "Jumia refresh failed before the external request was sent",
+          refreshControlState: requestSent
+            ? "uncertain_or_in_progress"
+            : "ready_or_in_progress",
           liveRequestSent: requestSent,
           jumiaContacted: requestSent,
           manualRecoveryRequired: requestSent
