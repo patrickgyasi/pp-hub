@@ -3,14 +3,52 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    const respond = (data, status = 200) =>
-      new Response(JSON.stringify(data), {
-        status,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-store"
-        }
-      });
+    const allowedOrigin = env.PPHUB_ALLOWED_ORIGIN || "";
+
+const corsHeaders = () => {
+  const headers = {};
+
+  const origin = request.headers.get("Origin");
+
+  if (origin && allowedOrigin && origin === allowedOrigin) {
+    headers["Access-Control-Allow-Origin"] = allowedOrigin;
+    headers["Vary"] = "Origin";
+  }
+
+  return headers;
+};
+
+const respond = (data, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      ...corsHeaders()
+    }
+  });
+
+if (request.method === "OPTIONS") {
+  const headers = corsHeaders();
+
+  if (
+    request.headers.get("Origin") &&
+    allowedOrigin &&
+    request.headers.get("Origin") !== allowedOrigin
+  ) {
+    return new Response(null, { status: 403 });
+  }
+
+  return new Response(null, {
+    status: 204,
+    headers: {
+      ...headers,
+      "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Max-Age": "86400"
+    }
+  });
+}
 
     const requireAdmin = () =>
       Boolean(
@@ -97,8 +135,7 @@ export default {
         service: "PP Hub API",
         status: "online"
       });
-    }
-
+    
     // All remaining admin routes require authentication.
     if (
       url.pathname.startsWith("/admin/") &&
@@ -108,7 +145,130 @@ export default {
         error: "Unauthorized"
       }, 401);
     }
+// PUBLIC PRODUCT API
+// Only active products are visible to customers.
 
+if (
+  request.method === "GET" &&
+  url.pathname === "/products"
+) {
+  if (!env.DB) {
+    return respond({
+      success: false,
+      error: "Database binding missing"
+    }, 500);
+  }
+
+  try {
+    const limitValue = Number(url.searchParams.get("limit") || 30);
+    const offsetValue = Number(url.searchParams.get("offset") || 0);
+
+    if (
+      !Number.isInteger(limitValue) ||
+      limitValue < 1 ||
+      limitValue > 100 ||
+      !Number.isInteger(offsetValue) ||
+      offsetValue < 0
+    ) {
+      return respond({
+        success: false,
+        error: "Invalid pagination parameters"
+      }, 400);
+    }
+
+    const search = (url.searchParams.get("q") || "").trim();
+    const category = (url.searchParams.get("category") || "").trim();
+
+    let sql = `
+      SELECT
+        sku,
+        name,
+        category,
+        description,
+        selling_price_pesewas,
+        created_at,
+        updated_at
+      FROM pph_products
+      WHERE active = 1
+    `;
+
+    const values = [];
+
+    if (search) {
+      sql += `
+        AND (
+          name LIKE ?
+          OR sku LIKE ?
+          OR description LIKE ?
+        )
+      `;
+
+      const term = `%${search}%`;
+      values.push(term, term, term);
+    }
+
+    if (category) {
+      sql += ` AND category = ?`;
+      values.push(category);
+    }
+
+    sql += `
+      ORDER BY name ASC
+      LIMIT ? OFFSET ?
+    `;
+
+    values.push(limitValue, offsetValue);
+
+    const result = await env.DB.prepare(sql)
+      .bind(...values)
+      .all();
+
+    let countSql = `
+  SELECT COUNT(*) AS total
+  FROM pph_products
+  WHERE active = 1
+`;
+
+const countValues = [];
+
+if (search) {
+  countSql += `
+    AND (
+      name LIKE ?
+      OR sku LIKE ?
+      OR description LIKE ?
+    )
+  `;
+
+  const term = `%${search}%`;
+  countValues.push(term, term, term);
+}
+
+if (category) {
+  countSql += ` AND category = ?`;
+  countValues.push(category);
+}
+
+const countResult = await env.DB.prepare(countSql)
+  .bind(...countValues)
+  .first();
+    return respond({
+      success: true,
+      products: result.results || [],
+      pagination: {
+        limit: limitValue,
+        offset: offsetValue,
+        total: countResult?.total || 0
+      }
+    });
+
+  } catch {
+    return respond({
+      success: false,
+      error: "Product retrieval failed"
+    }, 500);
+  }
+}
     // 2. Initialize original token storage
     if (
       request.method === "POST" &&
