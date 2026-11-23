@@ -124,6 +124,116 @@ if (request.method === "OPTIONS") {
 
       return new TextDecoder().decode(plaintext);
     }
+    // PP HUB PASSWORD VERIFICATION
+// Existing account format:
+// pbkdf2-sha256$100000$BASE64_SALT$BASE64_DERIVED_KEY
+
+const PASSWORD_HASH_ITERATIONS = 100000;
+const PASSWORD_HASH_BITS = 256;
+
+function decodeBase64Strict(value) {
+  if (
+    typeof value !== "string" ||
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)
+  ) {
+    throw new Error("Invalid Base64");
+  }
+
+  const binary = atob(value);
+
+  const bytes = Uint8Array.from(
+    binary,
+    character => character.charCodeAt(0)
+  );
+
+  const canonical = btoa(
+    String.fromCharCode(...bytes)
+  );
+
+  if (canonical !== value) {
+    throw new Error("Non-canonical Base64");
+  }
+
+  return bytes;
+}
+
+async function verifyOwnerPassword(password, storedHash) {
+  try {
+    if (
+      typeof password !== "string" ||
+      typeof storedHash !== "string" ||
+      password.length === 0 ||
+      password.length > 1024
+    ) {
+      return false;
+    }
+
+    const parts = storedHash.split("$");
+
+    if (parts.length !== 4) {
+      return false;
+    }
+
+    const [
+      algorithm,
+      iterationsText,
+      saltText,
+      derivedKeyText
+    ] = parts;
+
+    if (
+      algorithm !== "pbkdf2-sha256" ||
+      iterationsText !== String(PASSWORD_HASH_ITERATIONS)
+    ) {
+      return false;
+    }
+
+    const salt = decodeBase64Strict(saltText);
+    const expectedKey = decodeBase64Strict(derivedKeyText);
+
+    if (
+      salt.length !== 16 ||
+      expectedKey.length !== 32
+    ) {
+      return false;
+    }
+
+    const passwordBytes = new TextEncoder().encode(password);
+
+    const importedKey = await crypto.subtle.importKey(
+      "raw",
+      passwordBytes,
+      "PBKDF2",
+      false,
+      ["deriveBits"]
+    );
+
+    const derivedBits = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt,
+        iterations: PASSWORD_HASH_ITERATIONS,
+        hash: "SHA-256"
+      },
+      importedKey,
+      PASSWORD_HASH_BITS
+    );
+
+    const actualKey = new Uint8Array(derivedBits);
+
+    // Compare every byte without stopping at the first mismatch.
+    let difference = 0;
+
+    for (let i = 0; i < expectedKey.length; i++) {
+      difference |= actualKey[i] ^ expectedKey[i];
+    }
+
+    return difference === 0;
+
+  } catch {
+    return false;
+  }
+}
 
     // 1. Public health check
     if (
