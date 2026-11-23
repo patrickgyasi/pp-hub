@@ -1,4 +1,3 @@
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -423,7 +422,7 @@ const countResult = await env.DB.prepare(countSql)
       url.pathname === "/admin/prepare-token-storage"
     ) {
       if (!env.DB || !env.JUMIA_REFRESH_TOKEN) {
-        return respond({
+                return respond({
           error: "Production configuration incomplete",
           databaseBindingPresent: Boolean(env.DB),
           refreshTokenSecretPresent: Boolean(
@@ -774,9 +773,8 @@ const countResult = await env.DB.prepare(countSql)
         }, 500);
       }
     }
-
-    // 10. Protected Jumia live token refresh
-    // Keep JUMIA_LIVE_REFRESH_ENABLED unset.
+        // 10. Protected Jumia live token refresh
+    // Keep JUMIA_LIVE_REFRESH_ENABLED unset until fully tested.
     if (
       request.method === "POST" &&
       url.pathname === "/admin/jumia/refresh"
@@ -927,61 +925,58 @@ const countResult = await env.DB.prepare(countSql)
             refreshExpiresIn * 1000
         ).toISOString();
 
-        let persisted = false;
-
-        for (let attempt = 1; attempt <= 3; attempt++) {
-          try {
-            const results = await env.DB.batch([
-              env.DB.prepare(`
-                UPDATE jumia_tokens
-                SET
-                  encrypted_refresh_token = ?,
-                  refresh_iv = ?,
-                  encrypted_access_token = ?,
-                  access_iv = ?,
-                  access_expires_at = ?,
-                  refresh_expires_at = ?,
-                  updated_at = ?
-                WHERE id = 1
-              `).bind(
-                encryptedRefresh.encrypted_token,
-                encryptedRefresh.iv,
-                encryptedAccess.encrypted_token,
-                encryptedAccess.iv,
-                accessExpiresAt,
-                refreshExpiresAt,
-                completedAtText
-              ),
-
-              env.DB.prepare(`
-                UPDATE jumia_refresh_control
-                SET
-                  state = 'ready',
-                  operation_id = NULL,
-                  started_at = NULL,
-                  updated_at = ?
+        // Persist the replacement tokens and release the lock
+        // only when this operation still owns the refresh control.
+        const results = await env.DB.batch([
+          env.DB.prepare(`
+            UPDATE jumia_tokens
+            SET
+              encrypted_refresh_token = ?,
+              refresh_iv = ?,
+              encrypted_access_token = ?,
+              access_iv = ?,
+              access_expires_at = ?,
+              refresh_expires_at = ?,
+              updated_at = ?
+            WHERE id = 1
+              AND EXISTS (
+                SELECT 1
+                FROM jumia_refresh_control
                 WHERE id = 1
                   AND state = 'in_progress'
                   AND operation_id = ?
-              `).bind(
-                completedAtText,
-                operationId
               )
-            ]);
+          `).bind(
+            encryptedRefresh.encrypted_token,
+            encryptedRefresh.iv,
+            encryptedAccess.encrypted_token,
+            encryptedAccess.iv,
+            accessExpiresAt,
+            refreshExpiresAt,
+            completedAtText,
+            operationId
+          ),
 
-            if (
-              results[0].meta.changes === 1 &&
-              results[1].meta.changes === 1
-            ) {
-              persisted = true;
-              break;
-            }
-          } catch {
-            // Retry while replacement tokens remain in memory.
-          }
-        }
+          env.DB.prepare(`
+            UPDATE jumia_refresh_control
+            SET
+              state = 'ready',
+              operation_id = NULL,
+              started_at = NULL,
+              updated_at = ?
+            WHERE id = 1
+              AND state = 'in_progress'
+              AND operation_id = ?
+          `).bind(
+            completedAtText,
+            operationId
+          )
+        ]);
 
-        if (!persisted) {
+        if (
+          results[0].meta.changes !== 1 ||
+          results[1].meta.changes !== 1
+        ) {
           throw new Error(
             "Token persistence was not confirmed"
           );
@@ -998,8 +993,8 @@ const countResult = await env.DB.prepare(countSql)
           liveRequestSent: true,
           jumiaContacted: true
         });
+
       } catch {
-              } catch {
         try {
           if (requestSent) {
             await env.DB.prepare(`
@@ -1047,27 +1042,10 @@ const countResult = await env.DB.prepare(countSql)
           manualRecoveryRequired: requestSent
         }, 502);
       }
-          }
-        } catch {
-          // Preserve the existing state if recovery fails.
-        }
-
-        return respond({
-          success: false,
-          error: requestSent
-            ? "Jumia refresh outcome is uncertain; manual recovery is required"
-            : "Jumia refresh failed before the external request was sent",
-          refreshControlState: requestSent
-            ? "uncertain_or_in_progress"
-            : "ready_or_in_progress",
-          liveRequestSent: requestSent,
-          jumiaContacted: requestSent,
-          manualRecoveryRequired: requestSent
-        }, 502);
-      }
     }
 
     // 11. Test concurrency and dummy-token persistence
+      // 11. Test concurrency and dummy-token persistence
     if (
       request.method === "POST" &&
       url.pathname === "/admin/jumia/test-refresh-safety"
@@ -1096,8 +1074,7 @@ const countResult = await env.DB.prepare(countSql)
         if (!current || current.state !== "ready") {
           return respond({
             success: false,
-            error:
-              "Refresh control must be ready before testing",
+            error: "Refresh control must be ready before testing",
             currentState: current?.state || "missing",
             jumiaContacted: false
           }, 409);
@@ -1144,9 +1121,7 @@ const countResult = await env.DB.prepare(countSql)
           ![0, 1].includes(changesA) ||
           ![0, 1].includes(changesB)
         ) {
-          throw new Error(
-            "Concurrent control test failed"
-          );
+          throw new Error("Concurrent control test failed");
         }
 
         acquiredOwner =
@@ -1196,9 +1171,7 @@ const countResult = await env.DB.prepare(countSql)
         `).bind(testId).first();
 
         if (!saved) {
-          throw new Error(
-            "Dummy token record not found"
-          );
+          throw new Error("Dummy token record not found");
         }
 
         const recoveredAccess = await decryptText(
@@ -1215,9 +1188,7 @@ const countResult = await env.DB.prepare(countSql)
           recoveredAccess !== dummyAccess ||
           recoveredRefresh !== dummyRefresh
         ) {
-          throw new Error(
-            "Dummy token recovery failed"
-          );
+          throw new Error("Dummy token recovery failed");
         }
 
         return respond({
@@ -1280,11 +1251,10 @@ const countResult = await env.DB.prepare(countSql)
       }
     }
 
-    // 12. Test isolated encrypted recovery storage.
+    // 12. Test isolated encrypted recovery storage
     if (
       request.method === "POST" &&
-      url.pathname ===
-        "/admin/jumia/test-recovery-storage"
+      url.pathname === "/admin/jumia/test-recovery-storage"
     ) {
       if (!env.DB) {
         return respond({
@@ -1326,8 +1296,7 @@ const countResult = await env.DB.prepare(countSql)
         if (existing) {
           return respond({
             success: false,
-            error:
-              "A real pending recovery record already exists",
+            error: "A real pending recovery record already exists",
             testStarted: false,
             existingRecordPreserved: true,
             jumiaContacted: false
@@ -1372,9 +1341,7 @@ const countResult = await env.DB.prepare(countSql)
         `).bind(testId).first();
 
         if (!saved) {
-          throw new Error(
-            "Recovery test record not found"
-          );
+          throw new Error("Recovery test record not found");
         }
 
         const recovered = await decryptText(
@@ -1383,9 +1350,7 @@ const countResult = await env.DB.prepare(countSql)
         );
 
         if (recovered !== dummyToken) {
-          throw new Error(
-            "Recovery verification failed"
-          );
+          throw new Error("Recovery verification failed");
         }
 
         await env.DB.prepare(`
@@ -1404,9 +1369,7 @@ const countResult = await env.DB.prepare(countSql)
         cleanupVerified = !remaining;
 
         if (!cleanupVerified) {
-          throw new Error(
-            "Test cleanup could not be verified"
-          );
+          throw new Error("Test cleanup could not be verified");
         }
 
         return respond({
@@ -1440,11 +1403,10 @@ const countResult = await env.DB.prepare(countSql)
       }
     }
 
-    // 13. Safely stage a replacement Jumia refresh token.
+    // 13. Safely stage a replacement Jumia refresh token
     if (
       request.method === "POST" &&
-      url.pathname ===
-        "/admin/jumia/stage-recovery-token"
+      url.pathname === "/admin/jumia/stage-recovery-token"
     ) {
       if (!env.DB) {
         return respond({
@@ -1473,8 +1435,7 @@ const countResult = await env.DB.prepare(countSql)
       ) {
         return respond({
           success: false,
-          error:
-            "Replacement token and confirmation required",
+          error: "Replacement token and confirmation required",
           tokenStored: false
         }, 400);
       }
@@ -1486,10 +1447,7 @@ const countResult = await env.DB.prepare(countSql)
           WHERE id = 1
         `).first();
 
-        if (
-          !control ||
-          control.state !== "uncertain"
-        ) {
+        if (!control || control.state !== "uncertain") {
           return respond({
             success: false,
             error: "Refresh control must be uncertain",
@@ -1517,8 +1475,7 @@ const countResult = await env.DB.prepare(countSql)
         if (existing) {
           return respond({
             success: false,
-            error:
-              "A pending recovery token already exists",
+            error: "A pending recovery token already exists",
             tokenStored: false,
             manualReviewRequired: true,
             jumiaContacted: false
@@ -1564,7 +1521,7 @@ const countResult = await env.DB.prepare(countSql)
       }
     }
 
-    // 14. Start a Jumia refresh operation journal record.
+    // 14. Start a Jumia refresh operation journal record
     if (
       request.method === "POST" &&
       url.pathname === "/admin/jumia/operation/start"
@@ -1577,6 +1534,31 @@ const countResult = await env.DB.prepare(countSql)
       }
 
       try {
+        await env.DB.prepare(`
+          CREATE TABLE IF NOT EXISTS jumia_refresh_operations (
+            operation_id TEXT PRIMARY KEY,
+            status TEXT NOT NULL CHECK (
+              status IN (
+                'prepared',
+                'request_sent',
+                'response_received',
+                'persisted',
+                'uncertain',
+                'failed'
+              )
+            ),
+            started_at TEXT NOT NULL,
+            request_sent_at TEXT,
+            response_received_at TEXT,
+            persistence_confirmed_at TEXT,
+            completed_at TEXT,
+            http_status INTEGER,
+            error_code TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          )
+        `).run();
+
         const operationId = crypto.randomUUID();
         const now = new Date().toISOString();
 
@@ -1603,6 +1585,7 @@ const countResult = await env.DB.prepare(countSql)
           created: true,
           jumiaContacted: false
         }, 201);
+
       } catch {
         return respond({
           success: false,
@@ -1612,7 +1595,7 @@ const countResult = await env.DB.prepare(countSql)
       }
     }
 
-    // 15. Read operation status.
+        // 15. Read operation status
     if (
       request.method === "POST" &&
       url.pathname === "/admin/jumia/operation/status"
@@ -1676,6 +1659,7 @@ const countResult = await env.DB.prepare(countSql)
           operation,
           jumiaContacted: false
         });
+
       } catch {
         return respond({
           success: false,
@@ -1684,7 +1668,7 @@ const countResult = await env.DB.prepare(countSql)
       }
     }
 
-    // 16. Mark an operation as uncertain.
+    // 16. Mark an operation as uncertain
     if (
       request.method === "POST" &&
       url.pathname === "/admin/jumia/operation/mark-uncertain"
@@ -1754,8 +1738,7 @@ const countResult = await env.DB.prepare(countSql)
 
           return respond({
             success: false,
-            error:
-              "Operation cannot be marked uncertain from its current status",
+            error: "Operation cannot be marked uncertain from its current status",
             currentStatus: current.status
           }, 409);
         }
@@ -1769,6 +1752,7 @@ const countResult = await env.DB.prepare(countSql)
           refreshControlChanged: false,
           jumiaContacted: false
         });
+
       } catch {
         return respond({
           success: false,
@@ -1777,7 +1761,7 @@ const countResult = await env.DB.prepare(countSql)
       }
     }
 
-    // 17. Controlled operation lifecycle transition.
+    // 17. Controlled operation lifecycle transition
     // This updates the journal only; it never contacts Jumia.
     if (
       request.method === "POST" &&
@@ -1886,12 +1870,6 @@ const countResult = await env.DB.prepare(countSql)
 
         const now = new Date().toISOString();
 
-        const timestampColumn = {
-          request_sent: "request_sent_at",
-          response_received: "response_received_at",
-          persisted: "persistence_confirmed_at"
-        }[nextStatus];
-
         const completed = [
           "persisted",
           "uncertain",
@@ -1959,10 +1937,9 @@ const countResult = await env.DB.prepare(countSql)
           jumiaContacted: false
         }, 500);
       }
-    
-}
-    
-    // 18. JTRE: Promote staged recovery token.
+    }
+
+    // 18. Promote staged recovery token
     // This performs local integrity checks only.
     // It does not contact Jumia or release refresh control.
     if (
@@ -2105,7 +2082,7 @@ const countResult = await env.DB.prepare(countSql)
       }
     }
 
-    // 18. Unknown routes
+    // 19. Unknown routes
     return respond({
       error: "Route not found"
     }, 404);
