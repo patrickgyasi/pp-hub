@@ -49,6 +49,180 @@ if (request.method === "OPTIONS") {
   });
 }
 
+// ========================================
+// PP HUB OWNER AUTHENTICATION HELPERS
+// ========================================
+
+const SESSION_COOKIE = "__Host-pphub_session";
+const CSRF_COOKIE = "pphub_csrf";
+const SESSION_SECONDS = 12 * 60 * 60;
+const LOGIN_WINDOW_SECONDS = 15 * 60;
+const LOGIN_MAX_FAILURES = 5;
+
+function base64ToBytes(value) {
+  return Uint8Array.from(
+    atob(value),
+    c => c.charCodeAt(0)
+  );
+}
+
+function bytesToHex(bytes) {
+  return Array.from(bytes)
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function bytesToBase64Url(bytes) {
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+async function sha256Hex(value) {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return bytesToHex(new Uint8Array(digest));
+}
+
+async function verifyOwnerPassword(password, storedHash) {
+  try {
+    const parts = storedHash.split("$");
+
+    if (
+      parts.length !== 4 ||
+      parts[0] !== "pbkdf2-sha256" ||
+      parts[1] !== "100000"
+    ) {
+      return false;
+    }
+
+    const salt = base64ToBytes(parts[2]);
+    const expected = base64ToBytes(parts[3]);
+
+    if (salt.length < 16 || expected.length !== 32) {
+      return false;
+    }
+
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(password),
+      "PBKDF2",
+      false,
+      ["deriveBits"]
+    );
+
+    const derived = await crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt,
+        iterations: 100000,
+        hash: "SHA-256"
+      },
+      key,
+      256
+    );
+
+    const actual = new Uint8Array(derived);
+
+    let difference = 0;
+
+    for (let i = 0; i < expected.length; i++) {
+      difference |= actual[i] ^ expected[i];
+    }
+
+    return difference === 0;
+  } catch {
+    return false;
+  }
+}
+
+function readCookie(request, name) {
+  const cookieHeader = request.headers.get("Cookie") || "";
+
+  for (const item of cookieHeader.split(";")) {
+    const index = item.indexOf("=");
+
+    if (index < 0) continue;
+
+    const key = item.slice(0, index).trim();
+
+    if (key === name) {
+      return item.slice(index + 1).trim();
+    }
+  }
+
+  return null;
+}
+
+function makeSessionCookie(token) {
+  return `${SESSION_COOKIE}=${token}; Path=/; Max-Age=${SESSION_SECONDS}; Secure; HttpOnly; SameSite=Strict`;
+}
+
+function makeCsrfCookie(token) {
+  return `${CSRF_COOKIE}=${token}; Path=/; Max-Age=${SESSION_SECONDS}; Secure; SameSite=Strict`;
+}
+
+function clearSessionCookies() {
+  return [
+    `${SESSION_COOKIE}=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Strict`,
+    `${CSRF_COOKIE}=; Path=/; Max-Age=0; Secure; SameSite=Strict`
+  ];
+}
+
+function csrfIsValid(request) {
+  const cookieToken = readCookie(request, CSRF_COOKIE);
+  const headerToken = request.headers.get("X-CSRF-Token");
+
+  return Boolean(
+    cookieToken &&
+    headerToken &&
+    cookieToken === headerToken
+  );
+}
+
+async function getOwnerSession(request, env) {
+  const token = readCookie(request, SESSION_COOKIE);
+
+  if (!token || !env.DB) return null;
+
+  const tokenHash = await sha256Hex(token);
+
+  const session = await env.DB.prepare(`
+    SELECT
+      s.id AS session_id,
+      s.user_id,
+      s.expires_at,
+      u.email,
+      u.role,
+      u.active
+    FROM pph_sessions s
+    JOIN pph_users u ON u.id = s.user_id
+    WHERE s.token_hash = ?
+      AND s.revoked_at IS NULL
+      AND julianday(s.expires_at) > julianday('now')
+      AND u.active = 1
+    LIMIT 1
+  `).bind(tokenHash).first();
+
+  return session || null;
+}
+
+function ownerOriginIsValid(request, env) {
+  const origin = request.headers.get("Origin");
+
+  return Boolean(
+    origin &&
+    env.PPHUB_ALLOWED_ORIGIN &&
+    origin === env.PPHUB_ALLOWED_ORIGIN
+  );
+}
+
     const requireAdmin = () =>
       Boolean(
         env.PPHUB_API_KEY &&
