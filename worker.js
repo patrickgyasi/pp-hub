@@ -368,6 +368,322 @@ async function verifyOwnerPassword(password, storedHash) {
         status: "online"
       });
     }
+    
+    // ========================================
+    // PP HUB OWNER AUTHENTICATION ROUTES
+    // ========================================
+
+    // 1. OWNER LOGIN
+    if (
+      request.method === "POST" &&
+      url.pathname === "/auth/login"
+    ) {
+      if (!env.DB) {
+        return respond({
+          success: false,
+          error: "Authentication service unavailable"
+        }, 503);
+      }
+
+      if (!ownerOriginIsValid(request, env)) {
+        return respond({
+          success: false,
+          error: "Forbidden"
+        }, 403);
+      }
+
+      let body;
+
+      try {
+        body = await request.json();
+      } catch {
+        return respond({
+          success: false,
+          error: "Invalid login request"
+        }, 400);
+      }
+
+      const email =
+        typeof body?.email === "string"
+          ? body.email.trim().toLowerCase()
+          : "";
+
+      const password =
+        typeof body?.password === "string"
+          ? body.password
+          : "";
+
+      if (
+        !email ||
+        email.length > 254 ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+        !password ||
+        password.length > 1024
+      ) {
+        return respond({
+          success: false,
+          error: "Invalid email or password"
+        }, 401);
+      }
+
+      try {
+        const now = Math.floor(Date.now() / 1000);
+        const keyHash = await sha256Hex(email);
+
+        const attempt = await env.DB.prepare(`
+          SELECT failure_count, window_started_at, locked_until
+          FROM pph_login_attempts
+          WHERE scope = ?
+            AND key_hash = ?
+          LIMIT 1
+        `).bind("owner-login", keyHash).first();
+
+        if (
+          attempt?.locked_until &&
+          attempt.locked_until > now
+        ) {
+          return respond({
+            success: false,
+            error: "Login temporarily unavailable. Try again later."
+          }, 429);
+        }
+
+        const user = await env.DB.prepare(`
+          SELECT id, email, password_hash, role, active
+          FROM pph_users
+          WHERE email = ?
+          LIMIT 1
+        `).bind(email).first();
+
+        const passwordValid = Boolean(
+          user &&
+          user.active === 1 &&
+          user.role === "owner" &&
+          await verifyOwnerPassword(password, user.password_hash)
+        );
+
+        if (!passwordValid) {
+          await env.DB.prepare(`
+            INSERT INTO pph_login_attempts (
+              scope,
+              key_hash,
+              failure_count,
+              window_started_at,
+              locked_until,
+              updated_at
+            )
+            VALUES (?, ?, 1, ?, NULL, ?)
+            ON CONFLICT(scope, key_hash) DO UPDATE SET
+              failure_count = CASE
+                WHEN window_started_at <= ? THEN 1
+                ELSE failure_count + 1
+              END,
+              window_started_at = CASE
+                WHEN window_started_at <= ? THEN ?
+                ELSE window_started_at
+              END,
+              locked_until = CASE
+                WHEN (
+                  CASE
+                    WHEN window_started_at <= ? THEN 1
+                    ELSE failure_count + 1
+                  END
+                ) >= ? THEN ?
+                ELSE locked_until
+              END,
+              updated_at = ?
+          `).bind(
+            "owner-login",
+            keyHash,
+            now,
+            now,
+            now - LOGIN_WINDOW_SECONDS,
+            now - LOGIN_WINDOW_SECONDS,
+            now,
+            now - LOGIN_WINDOW_SECONDS,
+            LOGIN_MAX_FAILURES,
+            now + LOGIN_WINDOW_SECONDS,
+            now
+          ).run();
+
+          return respond({
+            success: false,
+            error: "Invalid email or password"
+          }, 401);
+        }
+
+        // Clear failed attempts after successful authentication.
+        await env.DB.prepare(`
+          DELETE FROM pph_login_attempts
+          WHERE scope = ?
+            AND key_hash = ?
+        `).bind("owner-login", keyHash).run();
+
+        // Generate a new unpredictable session token.
+        const tokenBytes = crypto.getRandomValues(
+          new Uint8Array(32)
+        );
+
+        const sessionToken = bytesToBase64Url(tokenBytes);
+        const tokenHash = await sha256Hex(sessionToken);
+
+        const csrfBytes = crypto.getRandomValues(
+          new Uint8Array(32)
+        );
+
+        const csrfToken = bytesToBase64Url(csrfBytes);
+
+        const expiresAt = new Date(
+          Date.now() + SESSION_SECONDS * 1000
+        ).toISOString();
+
+        await env.DB.prepare(`
+          INSERT INTO pph_sessions (
+            user_id,
+            token_hash,
+            expires_at,
+            created_at,
+            revoked_at
+          )
+          VALUES (?, ?, ?, ?, NULL)
+        `).bind(
+          user.id,
+          tokenHash,
+          expiresAt,
+          new Date().toISOString()
+        ).run();
+
+        const response = respond({
+          success: true,
+          authenticated: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            role: user.role
+          },
+          csrfToken,
+          expiresAt
+        });
+
+        response.headers.append(
+          "Set-Cookie",
+          makeSessionCookie(sessionToken)
+        );
+
+        response.headers.append(
+          "Set-Cookie",
+          makeCsrfCookie(csrfToken)
+        );
+
+        return response;
+
+      } catch {
+        return respond({
+          success: false,
+          error: "Login service temporarily unavailable"
+        }, 500);
+      }
+    }
+
+    // 2. CHECK CURRENT OWNER SESSION
+    if (
+      request.method === "GET" &&
+      url.pathname === "/auth/me"
+    ) {
+      if (!env.DB) {
+        return respond({
+          success: false,
+          authenticated: false
+        }, 503);
+      }
+
+      try {
+        const session = await getOwnerSession(request, env);
+
+        if (!session || session.role !== "owner") {
+          return respond({
+            success: false,
+            authenticated: false
+          }, 401);
+        }
+
+        return respond({
+          success: true,
+          authenticated: true,
+          user: {
+            id: session.user_id,
+            email: session.email,
+            role: session.role
+          },
+          csrfToken: readCookie(request, CSRF_COOKIE),
+          expiresAt: session.expires_at
+        });
+
+      } catch {
+        return respond({
+          success: false,
+          authenticated: false,
+          error: "Session verification failed"
+        }, 500);
+      }
+    }
+
+    // 3. OWNER LOGOUT
+    if (
+      request.method === "POST" &&
+      url.pathname === "/auth/logout"
+    ) {
+      if (!ownerOriginIsValid(request, env)) {
+        return respond({
+          success: false,
+          error: "Forbidden"
+        }, 403);
+      }
+
+      if (!csrfIsValid(request)) {
+        return respond({
+          success: false,
+          error: "CSRF verification failed"
+        }, 403);
+      }
+
+      try {
+        const token = readCookie(request, SESSION_COOKIE);
+
+        if (token && env.DB) {
+          const tokenHash = await sha256Hex(token);
+
+          await env.DB.prepare(`
+            UPDATE pph_sessions
+            SET revoked_at = ?
+            WHERE token_hash = ?
+              AND revoked_at IS NULL
+          `).bind(
+            new Date().toISOString(),
+            tokenHash
+          ).run();
+        }
+
+        const response = respond({
+          success: true,
+          authenticated: false,
+          message: "Logged out"
+        });
+
+        for (const cookie of clearSessionCookies()) {
+          response.headers.append("Set-Cookie", cookie);
+        }
+
+        return response;
+
+      } catch {
+        return respond({
+          success: false,
+          error: "Logout failed"
+        }, 500);
+      }
+    }
+
     // All remaining admin routes require authentication.
     if (
       url.pathname.startsWith("/admin/") &&
