@@ -90,57 +90,6 @@ async function sha256Hex(value) {
   return bytesToHex(new Uint8Array(digest));
 }
 
-async function verifyOwnerPassword(password, storedHash) {
-  try {
-    const parts = storedHash.split("$");
-
-    if (
-      parts.length !== 4 ||
-      parts[0] !== "pbkdf2-sha256" ||
-      parts[1] !== "100000"
-    ) {
-      return false;
-    }
-
-    const salt = base64ToBytes(parts[2]);
-    const expected = base64ToBytes(parts[3]);
-
-    if (salt.length < 16 || expected.length !== 32) {
-      return false;
-    }
-
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(password),
-      "PBKDF2",
-      false,
-      ["deriveBits"]
-    );
-
-    const derived = await crypto.subtle.deriveBits(
-      {
-        name: "PBKDF2",
-        salt,
-        iterations: 100000,
-        hash: "SHA-256"
-      },
-      key,
-      256
-    );
-
-    const actual = new Uint8Array(derived);
-
-    let difference = 0;
-
-    for (let i = 0; i < expected.length; i++) {
-      difference |= actual[i] ^ expected[i];
-    }
-
-    return difference === 0;
-  } catch {
-    return false;
-  }
-}
 
 function readCookie(request, name) {
   const cookieHeader = request.headers.get("Cookie") || "";
